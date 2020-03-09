@@ -1,0 +1,130 @@
+The PT3_player
+~~~~~~~~~~~~~~
+
+	by Vince "Deater" Weaver
+	17 May 2019
+	http://www.deater.net/weave/vmwprod/pt3_player/
+
+	Plays Vortex Tracker II .pt3 files on the Apple II
+
+
+Background
+~~~~~~~~~~
+	Vortex Tracker is commonly used to create AY-3-8910 music for the
+	ZX Spectrum and Atari ST systems.  A large number of great pt3 files
+	can be found on the internet.
+
+	There are many benefits to using .pt3 format, but until now there
+	was no player available for Apple II/6502.  (Though some people
+	had been playing the files using a z80-card in their system).
+	Part of the challenge was the documentation for the format was
+	in Russian, and the only source-code available for .pt3
+	players were in uncommented z80 assembly or else Russian-commented
+	Pascal.
+
+	Why .pt3?  Why not play YM5 files?
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	There are already many projects (including one of my own) for
+	playing the .YM file format, which is much simpler.  It is just a
+	series of AY-3-8910 raw-register dumps which can quickly be sent
+	to the Mockingboard.
+
+	The issue is uncompressed YM5 files are really huge.  So you have to
+	do some sort of decompression on the fly, and even then you are looking
+	at 32k+ or more of RAM.  This might be fine on an Apple IIe with
+	128k of RAM, but I am targetting a II+ where I don't have that much
+	available.
+
+	A PT3 file is a tracker format, meaning a list of notes, patterns, and
+	ornaments and can be played in place.  Once you load the music file and
+	the player, no additional RAM is needed at all.  It does take more CPU
+	than playing a YM5 file.
+
+
+Using the PT3_PLAYER
+~~~~~~~~~~~~~~~~~~~~
+
+	The pt3_player.dsk should boot automatically.
+
+	Controls:
+		Right/Left arrow	Switch songs
+		Spacebar		Pause playback.
+		M			Switch from 1MHz to 1.77MHz mode
+		L			Enables looping in the song
+
+	FUTURE FEATURES:
+		Key to disable visualization
+		Key to skip ahead/back in pattern list
+
+
+ZX Compatability:
+~~~~~~~~~~~~~~~~~
+
+	ZX Spectrum songs expect a 1.77MHz AY-3-8910, but the Apple II
+		is 1MHz so by default songs would sound lower
+		pitched.  By default now we multiply by 9/16 to scale
+		things properly, but that does eat up extra CPU cycles.
+		You can toggle this on/off by pressing "M" when playing.
+
+	In theory we can create songs that expect 1MHz, but the pt3 format
+		has no way of indicating this.
+
+Adding other files
+~~~~~~~~~~~~~~~~~~
+
+	Unlike YM5 players which require complicated preparation of files
+	(with often complex, or hard-to find tools) the PT3_PLAYER can in
+	theory play plain .pt3 files.
+
+	To play your own files, just copy the file you want over an
+	existing file (using the same filename).
+
+	TODO: It would be great if the player was smart enough to catalog
+	the disk and just play all the files it finds, but that's a level
+	of disk manipulation I don't have time to mess with right now.
+
+
+Other Future Plans
+~~~~~~~~~~~~~~~~~~
+
+	The PT3 format can handle 6-channel songs (which a Mockingboard
+	can play).  I'd like to add support for this, but it will
+	need some low-level changes to the code.
+
+Code Optimization
+~~~~~~~~~~~~~~~~~
+
+	The original working code is about 4k (not counting the pt3 file)
+	and has an overhead of roughly 20% when playing a song interrupt-driven
+	at 50Hz.
+
+	I'm keeping some stats here as I try to optimize the size and speed.
+
+	Song: "Summer of Rain"
+	~~~~~~~~~~~~~~~~~~~~~~
+					lz4 compressed
+	pt3 size:	raw size:	ym5 size:	pt3.lz4:
+	3871		137015		7637		1793
+
+	Decoder Type	size	ZP use	decode	total	CPU overhead
+	-------------------------------------------------------------
+	Original	4k(?)	22B	28.16s	171s	16%
+
+
+Random Programming Reminders
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ASR = CMP #$80 / ROR
+
+signed 8-bit comparison
+see http://6502.org/tutorials/compare_beyond.html#2.2
+
+          SEC       ; prepare carry for SBC
+          SBC NUM   ; A-NUM
+          BVC LABEL ; if V is 0, N eor V = N, otherwise N eor V = N eor 1
+          EOR #$80  ; A = A eor $80, and N = N eor 1
+    LABEL
+
+If the N flag is 1, then A (signed) < NUM (signed) and BMI will branch
+If the N flag is 0, then A (signed) >= NUM (signed) and BPL will branch 

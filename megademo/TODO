@@ -1,0 +1,153 @@
+After Demosplash TODO:
+	+ Force 1MHz mode on GS?
+	+ Autodetect language card?
+	+ Autodetect mockingboard?
+	+ Patch vapor lock on II+ (mode switches 1-cycle early?)
+	+ Fix the mid-screen switches to look right on real hardware?
+
+
+TODO TODO:
+	+ Get timing right
+	+ Add play_music call in slow vapor_lock code?
+
+THANKS:
+	* Code: DEATER
+	* MUSIC: Dascon
+	* Fireworks: FOZZTEX
+	* DISK+LZ4: QKUMBA
+	* BMP2DHR: BILL BUCKELS
+	* VOYAGER 2
+	* TALBOT 0101B
+	* UTOPIA BBS
+	* VMW PRODUCTION
+
+Overall:
+	Trim the last 8 bytes off of all the lz4 files
+
+Music:
+	convert to Pt3
+	write Pt3 player
+	fit in RAM
+
+
+0: c64_opener:
+	DONE???
+
+1: falling_apple:
+	DONE?
+	REACH: roll in the change from all page1 to page1/page2
+	REACH: make it fall?
+	REACH: some sort of wipe?
+
+2: starring:
+	DONE???
+
+2.5: starring_people
+	DONE???
+
+3: e-mail:
+	DONE???
+	REACH: have bits flowing through wire animation?
+		just change some of green in cable to dark green?
+	REACH: have hands over keyboard move too?
+
+4: leave house:
+	DONE?
+	REACH: Add some sort of text	
+
+5: running bird:
+	DONE?
+	REACH: run to middle of screen, then have everything start moving?
+	REACH: have sprites partially on all screen rather than jumping at edge?
+	REACH: stop scrolling and run off at end?
+
+6: waterfall:
+	DONE?
+	REACH: pause under falls?
+	REACH: waterfall sound effect?
+
+7: arrival at ship
+	DONE?
+	REACH: tree goes from big to small, horizon drops?
+
+8: mode7:
+	DONE?
+	REACH: change ground to night-time darkness.  grey water
+
+9: spacebars:
+	DONE?
+
+10: arrive at frogysue:
+	DONE?
+	add text?
+
+11: fireworks:
+	DONE?
+	REACH: have VMW Production scroll logo into the GR mode next to it
+	have keypress restart entire demo (or exit) rather than re-start fireworks
+
+
+
+
+
+
+
+e-mail notes:
+
+**01234567890123456**
+2  RE: ViSit
+3
+4  DeAteR,
+5   Kommt bald.
+6  Ich vermisse
+7  dich.
+9
+10    DEIN IMMER
+11
+12    FroGGY SuE 
+18         /|
+19   __ __/ I 
+20  /__I    I/
+21 /_____FFFI\
+22
+
+**01234567890123456**
+2  DEATER,
+3
+4  Wir MuSSEN
+5  ZUSAMMEN SEIN.
+6
+7  RAUMFAHRST DU
+8  SCHNELL.
+9
+10     DEIN IMMER
+11
+12    FroGGY SuE 
+13      _
+14     [_]
+15    /| |\
+16   /_|_|_\
+17     /_\
+18         /|
+19   __ __/ I  ]T   Wir mu"ssen die Reiseschecks einlo"sen
+20  /__I    I/
+21 /_____FFFI\
+22
+
+
+DEATER IS COOL
+
+DAATA  :S C  !  "
+DEATEF YS C88I  U
+
+
+Apple IIe:   Apple II+
+
+0 *****              
+1 *          *****
+2 *          *
+3 *****      *
+4 *          *****
+5 *          *
+6 *****      *
+7            *****

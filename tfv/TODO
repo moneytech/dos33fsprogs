@@ -1,0 +1,28 @@
+mode7 speed fixes:
+
+	+  Skip key parsing if no key read
+
+	+ Self modifying code on the adds in inner loop
+
+	+ inline lookup_map (or at least a copy of it)
+		maybe code that detects if spacex/spacey add
+		incremented and just skip the lookup (avoid the need
+		for the cache code)
+
+	+ Unroll inner loop?  Might not help much since we are 
+		self-modifying and would have to duplicate
+		that.
+
+
+short term:
+
+longer term:
+	sky -- color looks too much like grass on monochrome display
+	map -- adjust x/y to better match real position
+	name entry screen
+	inventory screen
+	collision detection
+	after game over, return to title screen
+	save/restore game
+
+

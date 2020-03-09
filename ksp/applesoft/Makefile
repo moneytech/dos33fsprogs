@@ -5,7 +5,17 @@ SHAPETABLE = ../../hgr-utils/shape_table
 
 all:	ksp.dsk
 
-ACMPLX.BAS:	acmplx.bas
+
+$(TXT2BAS):
+	cd ../../asoft_basic-utils && make
+
+$(SHAPETABLE):
+	cd ../../hgr-utils && make
+
+$(PCX2HGR):
+	cd ../../hgr-utils && make
+
+ACMPLX.BAS:	acmplx.bas $(TXT2BAS)
 	$(TXT2BAS) < acmplx.bas > ACMPLX.BAS
 
 CONTRACT.BAS:	contract.bas
@@ -32,10 +42,10 @@ VAB.BAS:	vab.bas
 LOAD_KSP.BAS:	load_ksp.bas
 	$(TXT2BAS) < load_ksp.bas > LOAD_KSP.BAS
 
-ROCKET.SHAPE:	../ship2.table
+ROCKET.SHAPE:	../ship2.table $(SHAPETABLE)
 	$(SHAPETABLE) -b < ../ship2.table > ROCKET.SHAPE
 
-VAB.SHAPE:	../ship.table
+VAB.SHAPE:	../ship.table $(SHAPETABLE)
 	$(SHAPETABLE) -b < ../ship.table > VAB.SHAPE
 
 
@@ -47,12 +57,12 @@ ksp.dsk:	ACMPLX.BAS \
 		VAB.SHAPE \
 		LOAD_KSP.BAS \
 		LAUNCH.BAS GLOBE.HGR LAUNCHPAD.HGR ORBIT_TOP.HGR ORBIT_RIGHT.HGR \
-		LOADING.BAS LOADING.HGR SQUAD.HGR TITLE.HGR \
+		LOADING.BAS LOADING.HGR LOADING2.HGR SQUAD.HGR TITLE.HGR \
 		PHYSICS.BAS \
 		VAB.BAS VAB.HGR
-	$(DOS33) -y ksp.dsk SAVE B LOADING.HGR
-	$(DOS33) -y ksp.dsk SAVE B SQUAD.HGR
-	$(DOS33) -y ksp.dsk SAVE B TITLE.HGR
+	$(DOS33) -y ksp.dsk BSAVE -a 0x2000 LOADING.HGR
+	$(DOS33) -y ksp.dsk BSAVE -a 0x2000 SQUAD.HGR
+	$(DOS33) -y ksp.dsk BSAVE -a 0x2000 TITLE.HGR
 	$(DOS33) -y ksp.dsk SAVE A VAB.BAS
 	$(DOS33) -y ksp.dsk SAVE B VAB.HGR
 	$(DOS33) -y ksp.dsk SAVE A LOADING.BAS
@@ -84,13 +94,16 @@ GLOBE.HGR:	../globe.pcx
 	$(PCX2HGR) ../globe.pcx > GLOBE.HGR
 
 LOADING.HGR:	../loading.pcx
-	$(PCX2HGR) ../loading.pcx > LOADING.HGR
+	$(PCX2HGR) ../loading.pcx -r > LOADING.HGR
+
+LOADING2.HGR:	../loading2.pcx
+	$(PCX2HGR) ../loading2.pcx -r > LOADING2.HGR
 
 SQUAD.HGR:	../squad.pcx
-	$(PCX2HGR) ../squad.pcx > SQUAD.HGR
+	$(PCX2HGR) ../squad.pcx -r > SQUAD.HGR
 
 TITLE.HGR:	../title.pcx
-	$(PCX2HGR) ../title.pcx > TITLE.HGR
+	$(PCX2HGR) ../title.pcx -r > TITLE.HGR
 
 VAB.HGR:	../vab.pcx
 	$(PCX2HGR) ../vab.pcx > VAB.HGR

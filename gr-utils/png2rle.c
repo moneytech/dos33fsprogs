@@ -8,72 +8,63 @@
 #include <stdarg.h>
 
 #include "loadpng.h"
+#include "rle_common.h"
+
+
+
+/*****************************************/
+/* \/                                 \/ */
+/* Converts a PNG to RLE compressed data */
+/*****************************************/
+
+
 
 /* Converts a PNG to RLE compressed data */
 
 int main(int argc, char **argv) {
 
-	int enough=0,run=0;
-	int x;
-
 	unsigned char *image;
-	int xsize,ysize,last=-1,next;
-	FILE *outfile;
+	int xsize,ysize;
+	int size=0;
+	int out_type=OUTPUT_C;
 
-	if (argc<3) {
-		fprintf(stderr,"Usage:\t%s INFILE OUTFILE\n\n",argv[0]);
+	if (argc<4) {
+		fprintf(stderr,"Usage:\t%s type INFILE varname\n\n",argv[0]);
+		fprintf(stderr,"\ttype: c or asm or raw\n");
+		fprintf(stderr,"\tvarname: label for graphic\n");
+		fprintf(stderr,"\n");
+
 		exit(-1);
 	}
 
-	outfile=fopen(argv[2],"w");
-	if (outfile==NULL) {
-		fprintf(stderr,"Error!  Could not open %s\n",argv[2]);
-		exit(-1);
+	if (!strcmp(argv[1],"c")) {
+		out_type=OUTPUT_C;
+	}
+	else if (!strcmp(argv[1],"asm")) {
+		out_type=OUTPUT_ASM;
+	}
+	else if (!strcmp(argv[1],"raw")) {
+		out_type=OUTPUT_RAW;
 	}
 
-	if (loadpng(argv[1],&image,&xsize,&ysize)<0) {
+	if (loadpng(argv[2],&image,&xsize,&ysize,PNG_WHOLETHING)<0) {
 		fprintf(stderr,"Error loading png!\n");
 		exit(-1);
 	}
 
-	printf("Loaded image %d by %d\n",xsize,ysize);
+	fprintf(stderr,"Loaded image %s,%d by %d\n",argv[2],xsize,ysize);
 
-	x=0;
-	enough=0;
-	fprintf(outfile,"{ 0x%X,0x%x,\n",xsize,ysize);
-	last=image[x] | (image[x+xsize]<<4);
-	run++;
-	x++;
-	while(1) {
-		next=image[x] | (image[x+xsize]<<4);
+//	size=rle_original(out_type,argv[3],
+//		xsize,ysize,image);
 
-		if (next!=last) {
-			fprintf(outfile,"0x%02X,0x%02X,",run,last);
-			run=0;
-			last=next;
-		}
+	size=rle_smaller(out_type,argv[3],
+		xsize,ysize,image);
 
-		run++;
-
-
-		x++;
-		enough++;
-		if (enough>=xsize) {
-			enough=0;
-			x+=xsize;
-			fprintf(outfile,"\n");
-		}
-
-
-		if (x>xsize*ysize) {
-			/* print tailing value */
-			fprintf(outfile,"0x%02X,0x%02X,",run,last);
-			break;
-		}
-	}
-	fprintf(outfile,"};\n");
-
-	fclose(outfile);
+	fprintf(stderr,"Size %d bytes\n",size);
 
 	return 0;
 }
+
+
+
+

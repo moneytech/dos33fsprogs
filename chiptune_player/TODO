@@ -1,0 +1,3 @@
++ Song loop support (hard if looping to the middle of a block)
+
++ Fix the dos33 tool, it has issues when the disk is nearly full

@@ -1,0 +1,268 @@
+                               Talbot Fantasy 7
+
+                           by Deater (Vince Weaver)
+
+                               vince@deater.net
+                    http://www.deater.net/weave/vmwprod/tfv/
+
+Background
+~~~~~~~~~~
+
+What you've always wanted, a poorly done FF7 clone for the Apple II.
+
+Yes, I'm using the 40x40 15-color Low-resolution graphics mode of
+the Apple II. This means the game could in theory run on the original
+Apple II released in 1977 (if you had been fabulously rich enough to
+populate all 48k of RAM). 
+
+
+
+Mode7 Optimization Notes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Original implementation:
+	Multiplying 1.0 * 2.0 = 2.0, took 707 cycles
+	Multiplying ff.ff * ff.ff = 0.0, took 761 cycles
+
+	Cycles: flying=               162
+	Cycles: getkey=                46
+	Cycles: page_flip=             26
+	Cycles: multiply=          88,179
+	Cycles: mode7=             76,077
+	Cycles: lookup_map=        33,920
+	Cycles: put_sprite=         2,561
+	==================================
+	Total =                   200,971
+	Frame Rate = 4.98 fps
+
+Update Multiply to use zero page addresses:
+	Multiplying 1.0 * 2.0 = 2.0, took 616 cycles
+	Multiplying ff.ff * ff.ff = 0.0, took 664 cycles
+
+	Cycles: flying=              162
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         76,561
+	Cycles: mode7=            76,077
+	Cycles: lookup_map=       33,920
+	Cycles: put_sprite=        2,561
+	===================================
+	Total =                  189,353
+	Frame Rate = 5.28 fps
+
+Update to use "fast multiply" w 2kB squares table lookup:
+	Multiplying 1.0 * 2.0 = 2.0, took 228 cycles
+	Multiplying ff.ff * ff.ff = 0.0, took 272 cycles
+
+	Cycles: flying=              162
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         27,041
+	Cycles: mode7=            76,077
+	Cycles: lookup_map=       33,920
+	Cycles: put_sprite=        2,561
+	=================================
+	Total =                  139,833
+	Frame Rate = 7.15 fps
+
+Update to optimize fast multiply (reusing NUM1H, return results in register)
+	Multiplying 1.0 * 2.0 = 2.0, took 234 cycles
+	Multiplying ff.ff * ff.ff = 0.0, took 278 cycles
+
+	Cycles: flying=              162
+	Cycles: getkey=               46
+        Cycles: page_flip=            26
+        Cycles: multiply=         24,935
+        Cycles: mode7=            73,925
+        Cycles: lookup_map=       33,920
+        Cycles: put_sprite=        2,561
+	=================================
+        Total =                  135,575
+	Frame Rate = 7.38 fps
+
+Add a cache to lookup_map
+
+	Cycles: flying=              162
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         24,935
+	Cycles: mode7=            73,445
+	Cycles: lookup_map=       24,649
+	Cycles: put_sprite=        2,561
+	=================================
+	Total =                  125,824
+	Frame Rate = 7.95 fps
+
+Don't draw sky every frame
+
+	Cycles: flying=              162
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         24,935
+	Cycles: mode7=            69,099
+	Cycles: lookup_map=       24,649
+	Cycles: put_sprite=        2,561
+	=================================
+	Total =                  121,478
+	Frame Rate = 8.23 fps
+
+Move checking if over water out of critical section
+
+	Cycles: flying=              187
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         24,935
+	Cycles: mode7=            54,374
+	Cycles: lookup_map=       24,712
+	Cycles: put_sprite=        2,561
+	=================================
+	Total =                  106,841
+	Frame Rate = 9.36 fps
+
+Move to 40x40 mode
+
+	Cycles: flying=              187
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         49,613
+	Cycles: mode7=           123,701
+	Cycles: lookup_map=       48,847
+	Cycles: put_sprite=        2,561
+	=================================
+	Total =                  224,981
+	Frame Rate = 4.44 fps
+
+Remove some unnecessary zero page copies in the mode7 code
+	Cycles: flying=              187
+	Cycles: getkey=               46
+	Cycles: page_flip=            26
+	Cycles: multiply=         49,613
+	Cycles: mode7=           141,269
+	Cycles: lookup_map=       21,718
+	Cycles: put_sprite=        2,561
+	================================
+	Total =                  215,420
+	Frame Rate = 4.64 fps
+
+A few more minor cleanups in the Y loop
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        49,613
+	Cycles: mode7=          140,858
+	Cycles: lookup_map=      21,718
+	Cycles: put_sprite=       2,561
+	===============================
+	Total =                 215,009
+	Frame Rate = 4.65 fps
+
+Add some self-modifying code to inner loop:
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        49,613
+	Cycles: mode7=          131,610
+	Cycles: lookup_map=      21,718
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 205,761
+	Frame Rate = 4.86 fps
+
+More self-modifying code, also move SCREEN_X to X register
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        49,613
+	Cycles: mode7=          118,034
+	Cycles: lookup_map=      22,747
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 193,214
+	Frame Rate = 5.18 fps
+
+Remove unneeded precision in the 8.8 x 8.8 fixed point multiply
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        43,588
+	Cycles: mode7=          118,034
+	Cycles: lookup_map=      22,747
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 187,189
+	Frame Rate = 5.34 fps
+
+In-line unsigned multiply inside of signed multiply (save 12 cycles)
+	Multiplying 1.0 * 2.0 = 2.0, took 198 cycles
+	Multiplying ff.ff * ff.ff = 0.0, took 218 cycles
+
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        40,888
+	Cycles: mode7=          118,034
+	Cycles: lookup_map=      22,747
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 184,489
+	Frame Rate = 5.42 fps
+
+
+Have loop counter count down from 40 instead of count up (avoid compare)
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        40,888
+	Cycles: mode7=          115,538
+	Cycles: lookup_map=      22,747
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 181,993
+	Frame Rate = 5.49 fps
+
+Move spacez updates out of line and also do some self modifying code
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        40,680
+	Cycles: mode7=          114,830
+	Cycles: lookup_map=      22,747
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 181,077
+	Frame Rate = 5.52 fps
+
+Re-arranged multiply result register to allow more optimization.
+This looks like a pessimization, but it's because the cycle counting code
+	had been undercounting and missed a few add routines :(
+
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        40,680
+	Cycles: mode7=          115,150
+	Cycles: lookup_map=      22,747
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 181,397
+	Frame Rate = 5.51 fps
+
+Make lookup_map inline.  Again it looks like an impressive speedup
+but some of this was fixing the cycle count estimates.
+
+	Cycles: flying=             187
+	Cycles: getkey=              46
+	Cycles: page_flip=           26
+	Cycles: multiply=        40,680
+	Cycles: mode7=          111,882
+	Cycles: lookup_map=      19,872
+	Cycles: put_sprite=       2,561
+	================================
+	Total =                 175,254
+	Frame Rate = 5.71 fps
+
+
+
+Each cycle removed from inner X loop saves
+	32*40=1280 cycles

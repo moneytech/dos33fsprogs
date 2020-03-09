@@ -1,0 +1,681 @@
+\documentclass[twocolumn]{article}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{fancyhdr}
+
+\usepackage{hyperref}
+
+%\usepackage{graphicx}
+\usepackage{colortbl}
+\usepackage{multirow}
+
+\pagestyle{fancy}
+
+\fancypagestyle{firststyle}
+{
+   \fancyhf{}
+   \fancyhead[C]{A version of this document appeared in PoC~\textbar\textbar~GTFO 0x18}
+   \fancyfoot{}
+}
+
+
+%\fancyhead{}
+%\fancyfoot{}
+%\fancyhead[CO,CE]{A version of this document appeared in PoC || GTFO 0x18}
+%\fancyfoot[C] {\thepage}
+%\renewcommand{\headrulewidth}{0pt}
+%\renewcommand{\footrulewidth}{0pt}
+
+
+
+\begin{document}
+
+\title{Making an 8k Low-resolution Graphics Demo for the Apple II}
+\author{by DEATER, AKA Vincent M. Weaver}
+\date{}
+\maketitle
+
+\thispagestyle{firststyle}
+
+\section{Why would anyone do this?}
+
+While making an inside-joke filled game for my retro system of choice,
+the Apple~II, I needed to create a Final-Fantasy-esque
+flying-over-the-planet sequence.
+I was originally going to fake this, but why fake graphics when you
+can laboriously spend weeks implementing the effect for real?
+It turns out the Apple~II is just barely capable of generating
+the effect in real time.
+
+Once I got the code working I realized it would be great as part of a
+graphical demo, so off on that tangent I went.
+This turned out well, despite the fact that all I knew about the demoscene I
+had learned from a few viewings of the Future Crew {\em Second Reality} demo
+combined with dimly remembered Commodore 64 and Amiga usenet flamewars.
+
+% from a few decades ago.
+%  This started out as some SNES style mode7 pseudo-3d graphics code
+%  I came up with while working on my TF7 game.  The graphics looked
+%  pretty cool, so I started developing a demo around it.
+
+%To make thins even better, the code ended up being roughly around 8kB so a
+%lot of time was wasted fitting it under that arbitrary size limitation.
+
+While I hope you enjoy the description of the demo and the work that
+went into it, I suspect this whole enterprise is primarily of note
+due to the dearth of demos for the Apple~II platform.
+%So in the end this ends up being impressive mostly because so few people
+%have bothered to write demos for this particular platform.
+If you are truly interested in seeing impressive Apple~II demos, 
+I would like to make a shout out to FrenchTouch whose works
+put this one to shame.
+
+%  The codesize ended up being roughly around 8kB, so I thought I'd
+%  make it into an 8k demo.  There aren't many out there for the Apple II.
+%  and a Mockingboard sound card.
+
+%  The demo tries to hit the lowest common denominator for Apple II systems,
+%  so in theory you could have run this on an Apple II in 1977 if you
+%  were rich enough to afford 48k of RAM.  The Mockingboard sound wasn't
+%  available until 1981, but still this all predates the Commodore 64.
+
+%I was writing a game for the Apple II and realized I had come up with
+%some clever Super-Nintendo (SNES) style graphics routines that were just
+%crying to be turned into a demo-scene style demo.
+
+%The Apple II was the first computer I had access too, and I grew up in an odd
+%neighborhood where it was all Apples and not a Commodore to be seen.
+%My family long ago got rid of our machine, but I rescued an Apple IIe platinum
+%from the dumpster one day and have dragged it from state to state ever since.
+
+%I find 6502 assembly to be oddly therapeutic, and will code in it when other
+%projects become too stressful.  Especially when Linux up and hangs on me
+%because firefox tried to do something stupid in javascript.  I then pine for
+%the days when you could do something useful in 64k of RAM, and not have your
+%machine fall over because somehow 4GB is not enough.
+
+%Background:
+
+%The Apple II was the first computer I programmed on, lo many years ago.
+%Mostly in Applesoft BASIC (which ended up being the only Microsoft product
+%I ever liked) but I was starting to get into assembly language about the
+%time my family got a 386 system.
+
+%I've revisited over the years, with some 6502 programming to show I could.
+%My skills were not that great, I had one of my size-optimization projects
+%crowd re-optimized.  For a while I had a side-gig re-optimizing modern games
+%in BASIC, before getting sidetracked into going full in on 6502 assembly
+%again.
+
+%Introduced in 1977.
+%The Apple II runs at 1.XX check Megahertz.  6502, which can easily
+%address 64 kB of RAM (more with bank switching).  Shipped with as little
+%as 4kB of RAM.  Three registers, (A,X,Y) but a large ``zero page'' which
+%gives you register-like actions on the first 256 bytes of RAM.
+%
+%DOS3.3 operating system with 140k floppies.  Amazing programming by Wozniak,
+%allowing all kinds of floppy protection shenanigans (cite 4am, previous
+%article).
+
+\section{The Hardware}
+
+The Apple~II was introduced in 1977.
+In theory this demo will run on hardware that old, although I do
+not have access to a system of that vintage.
+I like to troll Commodore fans by noting this predates the Commodore 64 by 
+five years.
+
+
+
+\vspace{1ex}
+\noindent
+{\bf CPU, RAM and Storage:}
+
+The Apple II has a 6502 processor running at roughly 1.023MHz.
+Early models only shipped with 4k of RAM, but later 48k, 64k, and 128k
+systems were common.
+While the demo itself fits in 8k, it decompresses to a larger size and uses
+a full 48k of RAM;
+this would have been very expensive in 1977.
+See Figure~\ref{fig:map} for a diagram of the memory map.
+
+Also in 1977 you would probably be loading this from cassette tape.
+It would be another year before Woz's single-sided
+$5\frac{1}{4}$" Disk II came about (eventually offering 140k of
+storage per side with the release of Apple DOS3.3 in 1980). 
+	
+\vspace{1ex}
+\noindent
+{\bf Sound:}
+
+The only sound available in a stock Apple II is a bit-banged speaker.
+There was no timer interrupt; if you wanted music you had to cycle-count
+via the CPU to get the waveforms you needed.
+
+The demo uses a Mockingboard soundcard which was introduced in 1981.
+This board contains dual AY-3-8910 sound generation chips connected via
+6522 I/O chips.
+Each sound chip provides 3 channels of square waves as well as noise and
+envelope effects.
+
+\vspace{1ex}
+\noindent
+{\bf Graphics:}
+
+It is hard to imagine now, but the Apple II had nice graphics for its time.
+Compared to later competitors, however, it had some limitations.
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+Hardware Sprites     &	No \\
+User-defined charset &	No \\
+Blanking interrupts  &	No \\
+Palette selection    &	No \\
+Linear framebuffer   &	No \\
+Hardware scrolling   &	No \\
+Hardware page flip   &	Yes \\
+\hline
+\end{tabular}
+\end{center}
+
+The hi-res graphics mode is a complex mess of NTSC hacks by Woz.
+You get approximately 280x192 resolution, with 6 colors available.
+The colors are NTSC artifacts with limitations 
+on which colors can be next to each other (in blocks of 3.5 pixels).
+There is plenty of fringing on edges, and colors change depending on
+whether they are drawn at odd or even locations.
+To add to the madness, the framebuffer is interleaved in a complex way,
+and pixels are drawn least-significant-bit first (all of this to get
+DRAM refresh for free and to shave a few 7400 series logic chips from
+the design).
+You do get two pages of graphics, Page 1 is at
+{\tt \$2000}\footnote{On 6502 systems hexadecimal values are 
+traditionally indicated by a dollar sign}
+and Page 2 at {\tt \$4000}.
+Optionally 4 lines of text can be shown at the bottom of the
+screen instead of graphics.
+
+The lo-res mode is a bit easier to use.  
+It provides 40x48 blocks, reusing the same memory as the 40x24 text mode.
+(As with hi-res you can switch to a 40x40 mode with four lines of
+text displayed at the bottom).
+Fifteen colors are available (there are two greys which are indistinguishable).
+Again the addresses are interleaved in a non-linear fashion.
+Lo-res Page 1 is at {\tt \$400} and Page 2 is at {\tt \$800}.
+
+Some amazing effects can be achieved by cycle counting, reading
+the floating bus, and racing the beam while toggling graphics
+modes on the fly.
+Unfortunately for you this demo does not do any of those things
+so you will not be reading about that today.
+
+%Later models added double low-res (80x48) and double hi-res (x y in
+%NTSC 15 color) but didn't appear until 198x, and only on later IIe, IIc
+%models.
+
+%Apple also came out with the IIgs which arguably was much more advanced
+%and cheaper than the Mac, but Apple cancelled the II line much to the
+%sadness of the users (Apple II forever).
+
+
+\section{Development Setup}
+
+I do all of my coding under Linux, using the nano text editor.
+I use the ca65 assembler from the cc65 project, which I find to be a reasonable
+tool although many ``real'' Apple II programmers look down on it for some
+reason.
+I cross-compile the code, constructing Apple DOS3.3 disk images using
+custom tools I have written.
+I test using emulators:
+AppleWin (run under the wine emulator) is the easiest to use, but
+until recently MESS/MAME had cleaner sound.
+
+Once the code appears to work, I put it on a USB stick and transfer
+to actual hardware using a CFFA3000 disk emulator installed in
+the actual Apple II (an Apple IIe platinum edition).
+
+%\section{Related Work}
+%
+%See anything by the group FrenchTouch, whose Apple II demos outclass
+%mine by a lot.
+
+
+%  http://www.deater.net/weave/vmwprod/mode7_demo/
+
+
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[width=2in]{figures/hidden_vmw.png}
+\end{center}
+\caption{VMW logo hidden in the executable data.\label{fig:vmw}}
+\end{figure}
+
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[width=\columnwidth]{figures/mode7_demo_title.png}
+\end{center}
+\caption{The title screen.\label{fig:title}}
+\end{figure}
+
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[width=\columnwidth]{figures/m7_screen1.png}
+\caption{Bouncing ball on infinite checkerboard.\label{fig:ball}}
+\end{center}
+\end{figure}
+
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[width=\columnwidth]{figures/m7_screen4.png}
+\caption{Spaceship flying over an island.\label{fig:tb1}}
+\end{center}
+\end{figure}
+
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[width=\columnwidth]{figures/m7_screen3.png}
+\end{center}
+\caption{Spaceship with starfield.\label{fig:stars}}
+\end{figure}
+
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[width=\columnwidth]{figures/m7_screen2.png}
+\end{center}
+\caption{Rasterbars, stars, and credits.  Stealth Susie was a particularly
+well-traveled guinea pig.
+\label{fig:credits}}
+\end{figure}
+
+
+\section{The Demo}
+
+\subsection{BOOTLOADER}
+
+An Applesoft BASIC ``HELLO'' program loads the binary automatically at bootup.
+This does not count towards the executable size, as you could manually BRUN 
+the 8k machine-language program if you wanted.
+
+To make the loading time slightly more interesting the HELLO program enables
+graphics mode and loads the program to address {\tt \$2000} (hi-res page1).
+This causes the display to filled with the colorful pattern corresponding
+to the compressed image.
+This conveniently fills all 8k of the display RAM, or would have
+if we had POKEd the right soft-switch to turn off
+the bottom 4 lines of text.
+
+Upon loading, execution starts at address {\tt \$2000}.
+
+\subsection{DECOMPRESSION}
+
+The binary is encoded with the LZ4 algorithm.
+We flip to hi-res Page 2 and decompress to this region so the display
+now shows the executable code.
+
+The 6502 size-optimized LZ4 decompression code was written by qkumba
+(Peter Ferrie).
+%	http://pferrie.host22.com/misc/appleii.htm
+The program and data decompress to around 22k starting at {\tt \$4000}.
+This over-writes parts of DOS3.3, but since we are done with the disk
+this is not an issue.
+
+If you look carefully at the upper left corner of the screen during
+decompress you will see my triangular logo, which is supposed to evoke
+my VMW initials (see Figure~\ref{fig:vmw}).
+To do this I had to put the proper bit pattern inside the code
+at the interleaved addresses of {\tt \$4000}, {\tt \$4400}, {\tt \$4800},
+and {\tt \$4C00}.
+The image data at {\tt \$4000} maps to (mostly)
+harmless code so it is left in place and executed.
+Making this work turned out to be more trouble than it was worth, especially
+as the logo is not visible in the youtube capture of the demo (the video
+compression does not handle screens full of seemingly random noise well).
+
+The demo was optimized to fit in 8k.
+Optimizing code inside of a compressed image is much more complicated than
+regular size optimization.
+Removing instructions sometimes makes the binary {\em larger} as it no longer
+compresses as well.
+Long runs of values (such as 0 padding) are essentially free.
+This mostly turned into an exercise of guess-and-check until everything fit.
+
+
+\subsection{TITLE SCREEN}
+
+Once decompression is done, execution continues at address {\tt \$4000}.
+We switch to low-res mode for the rest of the demo.
+
+\noindent
+{\bf FADE EFFECT}:
+The title screen fades in from black.
+This is a software hack as the Apple II does not have palette support.
+The image is loaded to an off-screen buffer and a lookup table is used to
+copy in the faded versions on the fly.
+
+\noindent
+{\bf TITLE GRAPHICS}:
+The title screen is shown in Figure~\ref{fig:title}.
+The image is run-length encoded (RLE) which is
+probably unnecessary in light of it being further LZ4 encoded.
+(The LZ4 compression was a late addition to this endeavor).
+
+Why not save some space and just load our demo at {\tt \$400} and negate
+the need
+to copy the image in place?
+Remember the graphics are 40x48 (shared with the text display region).
+It might be easier to think of it as 40x24 characters, with the top / bottom
+4-bits of each ASCII character being interpreted as colors for a half-height
+block.
+If you do the math you will find this takes 960 bytes of space, but the memory
+map reserves 1k for this mode.
+There are ``holes'' in the address range that are not displayed, and 
+various pieces of hardware can use these as scratchpad memory.  
+This means just overwriting the whole 1k with data might not work out well
+unless you know what you are doing.
+To this end our RLE decompression code skips the holes just to be safe.
+
+\noindent
+{\bf SCROLL TEXT}:
+The title screen has scrolling text at the bottom.
+This is nothing fancy, the text is in a buffer off screen and a 40x4 
+chunk of RAM is copied in every so many cycles.
+You might notice that there is tearing/jitter in the scrolling even
+though we are double-buffering the graphics.  
+Sadly there is not a reliable cross-platform way to get the VBLANK info 
+on Apple II machines, especially the older models.
+This is even more noticeable in the recorded video, as the capture card and
+video encoding conspire to make this look worse than things look in person.
+
+\subsection{MOCKINGBOARD MUSIC}
+
+No demo is complete without some exciting background music.
+I like chiptune music, especially the kind written
+for AY-3-8910 based systems.
+During the long time waiting for my Mockingboard hardware to arrive
+I designed and built a Raspberry Pi chiptune player that uses
+essentially the same hardware.
+This allowed me to build up some expertise with the software/hardware
+interface in advance.
+
+The song being played is a stripped down and re-arranged version of
+``Electric Wave'' from CC'00 by EA (Ilya Abrosimov). 
+
+Most of my sound infrastructure involves YM5 files, a format commonly
+used by ZX Spectrum and Atari ST users.
+The YM file format is just AY-3-8910 register dumps taken at 50Hz.  
+To play these back one sets up the sound card to interrupt 50 times a second
+and then writes out the 14 register values from each frame in an interrupt
+handler.
+
+%   To program the Mockingboard, each AY-3-8910 chip has 14 sound related
+%   registers that control the 3 channels.  Each AY chip has a dedicated
+%   VIA 6522 parallel I/O chip that handles the I/O.
+
+Writing out the registers quickly enough is a challenge on the Apple II.
+For each register you have to do a handshake then set both the register 
+number and the value.
+It is hard to do this in less than forty 1MHz cycles for each register.
+With complex chiptune files (especially those written on an ST with much
+faster hardware) it is sometimes not possible to get exact playback
+due to the delay.
+Further slowdown happens as you want to write both AY chips (the output
+is stereo, with one AY on the left and one on the right).
+To help with latency on playback we keep track of the last frame written
+and only write to the registers that have changed.
+
+%   I have a whole suite of code for manipulating YM sound data, in my
+%   vmw-meter git repository.
+
+Our code detects the Mockingboard at startup; we are lazy and only support
+finding the card in Slot 4 (which is a fairly typically location).
+%   The first step for getting this to work is detecting if a Mockingboard is
+%%  there.  This can be in any slot 1-7 on the Apple II, though typically
+%   Slot 4 is standard (in this demo we only check slot 4).
+The board is initialized, and then one of the 6522 timers is set to
+interrupt at 25Hz.
+% (it has to be an on-board timer as the default
+%   Apple II has no timers).
+Why 25Hz and not 50Hz?  At 50Hz with 14 registers you use 700 bytes/s.
+So a 2 minute song would take 84k of RAM, which is much more than is available.
+Also the Disk II requires hard real-time response involving the full 
+CPU to read from disk, so it is not possible to read more data while
+the demo is running.
+To allow the song to fit in memory (without the fancy circular buffer
+decompression routine utilized in my VMW Chiptune music-disk demo) we have
+to reduce the size.
+First the music is changed so it only needs to be updated at 25Hz.
+Then the register data is compressed from 14 bytes to 11 bytes by stripping off
+the envelope effects and packing together fields that have unused bits.
+In the end the sound quality suffered a bit, but we were able to fit an
+acceptably catchy chiptune inside of our 8k payload.
+
+\subsection{MODE7 BACKGROUND}
+
+``Mode7'' is a Super Nintendo (SNES) graphics mode that takes a tiled
+background and transforms it by rotating and scaling.
+The most common effect squashes the background out to the horizon, giving
+a three-dimensional look.
+The SNES did these transforms in hardware, but our demo must do
+them in software.
+
+%  As found on Wikipedia, the transform is of the type
+%
+%  [x'] = [a b]([x]-[x0])+[x0]
+%  [y']   [c d]([y] [y0]) [y0]
+
+% http://www.helixsoft.nl/articles/circle/sincos.htm
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Our algorithm is based on code by Martijn van Iersel.
+It iterates through each horizontal line on the screen and calculates the color
+to output based on the camera height ({\em spacez}) and {\em angle} as well
+as the current x and y coordinates ({\em cx} and {\em cy}).
+
+First the distance {\em d} is calculated based on fixed scale and
+distance-to-horizon factors.  
+Instead of a costly division we use a pre-generated lookup table for this.
+	\[d = \frac{z \times yscale}{y+horizon}\]
+Next calculate the horizontal scale (distance between points on 
+this line):
+	\[h = \frac{d}{xscale}\]
+Then calculate delta x and delta y values between each block on the line.
+We use a pre-computed sine/cosine lookup table.
+
+\pagebreak
+
+	\[dx = -sin(angle) \times h\]
+	\[dy = cos(angle) \times h\]
+The leftmost position in the tile lookup is calculated:
+	\[tilex = cx + (d*cos(angle) - (width/2) * dx\]
+	\[tiley = cy + (d*sin(angle) - (width/2) * dy\]
+Then an inner loop happens that adds dx and dy as we lookup the color
+from the tilemap (just a wrap-around array lookup) for each block
+on the line.
+	\[color = tilelookup(tilex,tiley)\]
+	\[plot (x, y) \]
+	\[tilex += dx, tiley+= dy\]
+
+\noindent
+{\bf Optimizations:}
+The 6502 processor cannot do floating point, so all of our routines use
+8.8 fixed point math.
+We eliminate all use of division, and convert as much as possible
+to table lookups (which involves limiting the heights and angles a bit).
+We also save some cycles by using self-modifying code,
+most notably hard-coding the height (z) value and modifying the code
+whenever this is changed.
+The code started out only capable of roughly 4.9fps in 40x20 resolution
+and in the end we improved this to 5.7fps in 40x40 resolution.
+Care was taken to optimize the innermost loop, as every cycle saved there
+results in 1280 cycles saved overall.
+
+\noindent
+{\bf Fast Multiply:}
+One of the biggest bottlenecks in the mode7 code was the multiply.
+Even our optimized algorithm calls for at least seven
+16bit x 16bit = 32bit multiplies, something that is {\em really} slow on 
+the 6502.
+A typical implementation takes around 700 cycles
+for a 8.8 x 8.8 fixed point multiply.
+
+% Note, this is Quarter-square multiplication, apparently an ancient algorithm
+% https://en.wikipedia.org/wiki/Multiplication_algorithm#Quarter_square_multiplication
+
+We improved this by using the ancient quarter-square 
+multiply algorithm, first described for 6502 use by Stephen Judd.
+
+This works by noting these factorizations:
+	\[(a+b)^{2} = a^{2}+2ab+b^{2}\]
+	\[(a-b)^{2}=a^{2}-2ab+b^{2}\]
+If you subtract these you can simplify to
+	\[a\times b =\frac{(a+b)^{2}}{4} - \frac{(a-b)^2}{4}\]
+
+For 8-bit values if you create a table of squares from 0 to 511
+(all 8-bit a+b and a-b fall in this range) then you can convert a multiply
+into two table lookups and a subtraction.
+This does have the downside of requiring 2kB of lookup tables
+(which can be generated at startup) but it reduces the multiply
+cost to the order of 250 cycles or so.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{BALL ON CHECKERBOARD}
+
+The first Mode7 scene transpires on an infinite checkerboard.
+A demo would be incomplete without some sort of bouncing geometric solid,
+in this case we have a pink sphere.
+The sphere is represented by 16 sprites that were captured from
+a 20 year old OpenGL game engine.
+Screenshots were taken then reduced to the proper size and color
+limitations.
+The shadows are also just sprites.
+Note that the Apple II has no dedicated sprite hardware, so these
+are drawn completely in software.
+
+The clicking noise on bounce is generated by accessing the speaker port
+at address {\tt \$C030}.
+This gives some sound for those viewing the demo without the benefit
+of a Mockingboard.
+
+\subsection{TFV SPACESHIP FLYING}
+
+This next scene has a spaceship flying over an island.
+The Mode7 graphics code is generic enough that only one copy of the code
+is needed to generate both the checkerboard and island scenes.
+The spaceship, water splash, and shadows are all sprites.
+The path the ship takes is pre-recorded; this is adapted from the
+Talbot Fantasy~7 game engine with the keyboard code replaced by a hard-coded
+script of actions to take.
+
+\subsection{STARFIELD}
+
+The spaceship now takes to the stars.
+This is typical starfield code, where on each iteration the x and y
+values are changed by
+	\[dx=\frac{x}{z}, dy=\frac{y}{z}\]
+In order to get a good frame rate and not clutter the lo-res screen
+only 16 stars are modeled.
+To avoid having to divide, the reciprocal of all possible z values
+are stored in a table, and the fast-multiply routine described
+previously is used.
+
+The star positions require random number generation, but there is no
+easy way to quickly get random data on the Apple II.
+Originally we had a 256-byte blob of pre-generated ``random'' values
+included in the code.
+This wasted space, so now instead we just use our code at address
+at \$5000 as if it were a block of random numbers.
+This was arbitrarily chosen, and it is not as random as it could be
+as seen when the ship enters hyperspace and the lower-right quadrant
+is distressingly star-free.
+
+A simple state machine controls star speed, ship movement, hyperspace,
+background color (for the blue flash) and the eventual sequence of sprites
+as the ship vanishes into the distance.
+
+\subsection{RASTERBARS/CREDITS}
+
+Once the ship has departed, it is time to run the credits as the stars
+continue to fly by.
+
+The text is written to the bottom four lines of the screen, seemingly
+surrounded by graphics blocks.
+Mixed graphics/text is generally not be possible on the Apple II, although
+with careful cycle counting and mode switching groups such as FrenchTouch
+have achieved this effect.
+What we see in this demo is the use of inverse-mode (inverted color)
+space characters which appear the same as white graphics blocks.
+
+The rasterbar effect is not really rasterbars, just a colorful assortment
+of horizontal lines drawn at a location determined with a sine lookup table.
+Horizontal lines can take a surprising amount of time to draw, but these
+were optimized using inlining and a few other tricks.
+
+The spinning text is done by just rapidly rotating the output string through
+the ASCII table, with the clicking effect again generated
+by hitting the speaker at address {\tt \$C030}.
+The list of people to thank ended up being the primary limitation to
+fitting in 8kB, as unique text strings do not compress well.  
+I apologize to everyone whose moniker got compressed beyond recognition,
+and I am still not totally happy with the centering of the text.
+
+\section{Obtaining the Code}
+
+More details, disk image, and full source can be found at the website:
+\url{http://www.deater.net/weave/vmwprod/mode7_demo/}
+
+%\section{Appendix: Memory Map}
+
+
+\begin{figure}
+\begin{center}
+\begin{scriptsize}
+\begin{BVerbatim}
+ -------------  $ffff
+|    ROM/IO   |
+ -------------  $c000
+|             |
+| Uncompressed|
+| Code/Data   |
+|             |
+ -------------  $4000
+| Compressed  |
+|   Code      |
+ -------------  $2000
+|   free      |
+ -------------  $1c00
+|   Scroll    |
+|    Data     |
+ -------------  $1800
+|  Multiply   |
+|   Tables    |	
+ -------------  $1000
+| LORES pg 3  |
+ -------------  $0c00
+| LORES pg 2  |
+ -------------  $0800
+| LORES pg 1  |
+ -------------  $0400
+|free/vectors |
+ -------------  $0200
+|    stack    |
+ -------------  $0100
+|   zero pg   |
+ -------------  $0000
+\end{BVerbatim}
+\end{scriptsize}
+\end{center}
+\caption{Memory Map (not to scale)\label{fig:map}}
+\end{figure}
+
+\appendix
+
+\input{dram_notes}
+
+
+\end{document}

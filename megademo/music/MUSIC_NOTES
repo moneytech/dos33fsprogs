@@ -1,0 +1,74 @@
+AYemul converted:
+
+5952 lines * 14 bytes worst case = 83k
+
+
+5952 = 31 * 192, and 14 unique patterns so 14*192 = 2688 * 14 = 37k
+
+Patterns:	31?
+		0 1 2 3 4 5 4 6 7 8 9 A 4 5 4 6 7 8 9 A 4 5 B C 7 8 9 A 9 A D
+
+R0/R1 = A Fine/Coarse
+R2/R3 = B Fine/Coarse
+R4/R5 = C Fine/Coarse
+R6 = Noise period
+R7 = Enable (noise/tone)
+R8 = A amp
+R9 = B amp
+R10 = C amp
+R11/R12 = Envelope Period
+R13 = Envelope Shape
+
+AF,AC+AAmp
+BF,BC+BAmp
+CF,CC+CAmp
+
+
+We don't use envelope here, so we can get by with
+8 bytes/frame
+2688*8=21k
+
+
+
+
+
+
+
+
+Converting MOD to PT3
+
+Effects:
+	MOD					PT3
+	~~~					~~~
+	F02	Temp				100 Tone up
+	C0A	Volume				200 Tone Down
+	A20	Vol slide up			300 Portamendo
+	400	Vibrato				400 Sample offset
+	3FF	Tone Portamendo			500 Ornament offset
+						600 Vibrato
+						900 Envelope slide up
+						A00 Envelope slide down
+						B00 Speed
+
+PT3 fields:
+	Note
+	Sample#
+	Envelope Type
+	Ornament Number
+	Channel Volume
+
+Volume: On AY-3-8910 this is logarithmic
+
+	MOD	PT3
+	$40	f
+	$35-	e
+	$26-	d
+	$1b-	c
+	$13-	b
+	$e-	a
+	$9-	9
+	$7-	8
+	$4	7
+	$3	6
+	$2	5
+	$1	3

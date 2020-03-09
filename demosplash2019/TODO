@@ -1,0 +1,62 @@
+TODO if time:
+	+ Don't re-vapor lock between first two scenes.
+		Avoid glitch in audio
+
+	+ when engines start, have only part of screen go lighter
+	+ memcpy() last frame in before star frame
+	+ better star animation (more frames?)
+	+ minor glitches in the book animation
+	+ Add colored bars for accent on Missing screen?
+
+General:
++ get music working
+
+
+OPENER:
+	+ Done?
+
+MISSING:
+	+ Add colored bars for accent?
+
+PACKAGE:   01234567890123456789012345678901234567
+	+ "MEANWHILE AT A DISTANT STARBASE PRISON"
+	  "AN INTERESTING PACKAGE IS RECEIVED"
+
+STARBASE:
+	+ change colors of shield? laser? blast?
+	+ room0	-- done
+	+ room1	- run in
+		- duck, start shield
+		- blash shield, alien
+		- run through doors
+
+	+ room2 - shoot another alien?
+		- foreground animation (robot?)
+
+	+ room3 (ship)
+		- blast control / free ship/.  Light toggles when blasted
+		- run to ship
+		- engines start
+		- some sort of fade-to-white transition
+			or Star Wipe?
+
+ESCAPE:
+	+ Get working
+	+ Keyboard emulation
+
+READING:
+	+ "FINALLY I CAN READ SOME BOOKS IN PEACE"
+
+CREDITS:
+	+ implement text
+	+ implement rasterbars
+
+	012345678901
+	CODE: DEATER
+	MUSIC: DYA
+	MISC MAGIC: QKUMBA
+	THANKS:
+	FROGYSUE
+	S. SUSIE
+	0101TALBOT
+18*4=

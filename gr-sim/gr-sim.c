@@ -5,14 +5,22 @@
 #include <SDL.h>
 
 #include "gr-sim.h"
+#include "tfv_zp.h"
+#include "6502_emulate.h"
 
 #include "apple2_font.h"
 
+/* 280x192 hi-res mode	*/
+#define HGR_XSIZE	280
+#define HGR_YSIZE	192
+#define HGR_X_SCALE	2
+#define HGR_Y_SCALE	2
+
 /* 40x48 low-res mode	*/
-#define XSIZE		40
-#define YSIZE		48
-#define PIXEL_X_SCALE	14
-#define PIXEL_Y_SCALE	8
+#define GR_XSIZE	40
+#define GR_YSIZE	48
+#define GR_X_SCALE	14
+#define GR_Y_SCALE	8
 
 /* 40 column only for now */
 #define TEXT_XSIZE	40
@@ -20,18 +28,10 @@
 #define TEXT_X_SCALE	14
 #define TEXT_Y_SCALE	16
 
-static int xsize=XSIZE*PIXEL_X_SCALE;
-static int ysize=YSIZE*PIXEL_Y_SCALE;
+static int xsize=GR_XSIZE*GR_X_SCALE;
+static int ysize=GR_YSIZE*GR_Y_SCALE;
 
 static int debug=0;
-
-
-/* 128kB of RAM */
-#define RAMSIZE 128*1024
-unsigned char ram[RAMSIZE];
-
-/* Registers */
-unsigned char a,y,x;
 
 /* Zero page addresses */
 #define WNDLFT	0x20
@@ -60,50 +60,70 @@ unsigned char a,y,x;
 #define FLASH	0xF3
 #define TEMP	0xFA
 
+static int text_mode=0xff;
+static int text_page_1=0x00;
+static int hires_on=0x00;
+static int mixed_graphics=0xff;
 
-/* Soft Switches */
-#define TXTCLR	0xc050
-#define TXTSET	0xc051
-#define	MIXCLR	0xc052
-#define MIXSET	0xc053
-#define	LOWSCR	0xc054
-#define HISCR	0xc055
-#define LORES	0xc056
-#define HIRES	0xc057
+static int plaid_mode=0;
 
-static int text_mode=1;
-static int text_page_1=1;
-static int hires_on=0;
-static int mixed_graphics=1;
+void set_plaid(void) {
+	plaid_mode=1;
+}
 
-static void soft_switch(unsigned short address) {
+void clear_plaid(void) {
+	plaid_mode=0;
+}
+
+void soft_switch(unsigned short address) {
 
 	switch(address) {
 		case TXTCLR:	// $c050
-			text_mode=0;
+			text_mode=0x00;
 			break;
 		case TXTSET:	// $c051
-			text_mode=1;
+			text_mode=0xff;
 			break;
 		case MIXCLR:	// $c052
-			mixed_graphics=0;
+			mixed_graphics=0x00;
 			break;
 		case MIXSET:	// $c053
-			mixed_graphics=1;
+			mixed_graphics=0xff;
 			break;
 		case LOWSCR:	// $c054
-			text_page_1=1;
+			text_page_1=0x00;
+			break;
+		case HISCR:	// $c055
+			text_page_1=0xff;
 			break;
 		case LORES:	// $c056
-			hires_on=0;
+			hires_on=0x00;
 			break;
 		case HIRES:	// $c057
-			hires_on=1;
+			hires_on=0xff;
 			break;
 		default:
 			fprintf(stderr,"Unknown soft switch %x\n",address);
 			break;
 	}
+}
+
+int soft_switch_read(unsigned short address) {
+
+	switch(address) {
+		case TEXT_RD:	// $c01a
+			return text_mode;
+		case MIXED_RD:	// $c01b
+			return mixed_graphics;
+		case PAGE2_RD:	// $c01c
+			return text_page_1;
+		case HIRES_RD:	// $c01d
+			return hires_on;
+		default:
+			fprintf(stderr,"Unknown soft switch read %x\n",address);
+			break;
+	}
+	return 0;
 }
 
 static SDL_Surface *sdl_screen=NULL;
@@ -157,9 +177,6 @@ int grsim_input(void) {
 	return 0;
 }
 
-
-
-
 static unsigned int color[16]={
 	0,		/*  0 black */
 	0xe31e60,	/*  1 magenta */
@@ -178,6 +195,31 @@ static unsigned int color[16]={
 	0x72ffd0,	/* 14 aqua */
 	0xffffff,	/* 15 white */
 };
+
+static unsigned int hcolor[8]={
+	0,		/*  0 black */
+	0x2ad600,
+//	0x14f53c,	/*  1 bright green */
+//	0xff44fd,	/*  2 purple */
+	0xc530ff,
+	0xffffff,	/*  3 white */
+	0,		/*  4 black */
+	0xff6a3c,	/*  5 orange */
+	0x14cffd,	/*  6 medium blue */
+	0xffffff,	/*  7 white */
+};
+
+static unsigned int hcolor_hack[8][2]={
+	{0,0},		// 0000 KK
+	{0,0},		// 0010 KK
+	{1,1},		// 0100 OO
+	{1,3},		// 0110 OW
+	{2,0},		// 1000 BK
+	{2,2},		// 1010 BB
+	{3,3},		// 1100 WW
+	{3,3},		// 1110 WW
+};
+
 
 
 	/* a = ycoord */
@@ -210,18 +252,6 @@ static int gbascalc(unsigned char a) {
 	return 0;
 }
 
-static short y_indirect(unsigned char base, unsigned char y) {
-
-	unsigned short addr;
-
-	addr=(((short)(ram[base+1]))<<8) | (short)ram[base];
-
-	if (debug) printf("Address=%x\n",addr+y);
-
-	return addr+y;
-
-}
-
 int scrn(unsigned char xcoord, unsigned char ycoord) {
 
 	unsigned char a,y,c;
@@ -244,6 +274,30 @@ int scrn(unsigned char xcoord, unsigned char ycoord) {
 	return 0;
 }
 
+int scrn_page(unsigned char xcoord, unsigned char ycoord, int page) {
+
+	unsigned char a,y,c;
+
+	a=ycoord;
+	y=xcoord;
+
+	c=a&1;
+	a=a>>1;
+	gbascalc(a);
+	ram[GBASH]+=page;
+	a=ram[y_indirect(GBASL,y)];
+
+	if (c) {
+		return a>>4;
+	}
+	else {
+		return a&0xf;
+
+	}
+
+	return 0;
+}
+
 static short gr_addr_lookup[24]={
 	0x400,0x480,0x500,0x580,0x600,0x680,0x700,0x780,
 	0x428,0x4a8,0x528,0x5a8,0x628,0x6a8,0x728,0x7a8,
@@ -251,44 +305,90 @@ static short gr_addr_lookup[24]={
 };
 
 
-int grsim_update(void) {
 
-	int x,y,i,j;
-	int bit_set,ch,inverse,flash;
+static void draw_lowres(unsigned int *out_pointer,int gr_start, int gr_end) {
+
+	int i,j,yy,xx;
+	int gr_addr,gr_addr_hi;
+	int temp_col;
 	unsigned int *t_pointer;
 
-	t_pointer=((Uint32 *)sdl_screen->pixels);
+	t_pointer=out_pointer+(gr_start*40*GR_X_SCALE*GR_Y_SCALE);
 
-	if (text_mode) {
-		for(y=0;y<TEXT_YSIZE;y++) {
-			for(j=0;j<TEXT_Y_SCALE;j++) {
-				for(x=0;x<TEXT_XSIZE;x++) {
-					ch=ram[gr_addr_lookup[y]+x];
-		//			printf("%x ",ch);
+	/* do the top 40/48 if in graphics mode */
+	for(yy=gr_start;yy<gr_end;yy++) {
 
-					if (ch&0x80) {
-						flash=0;
-						inverse=0;
-						ch=ch&0x7f;
-					}
-					else if (ch&0x40) {
-						flash=1;
-						inverse=0;
-						ch=ch&0x3f;
-					}
-					else {
-						inverse=1;
-						flash=0;
-						ch=ch&0x3f;
-					}
+		for(j=0;j<GR_Y_SCALE;j++) {
 
-					for(i=0;i<TEXT_X_SCALE;i++) {
+			gr_addr=gr_addr_lookup[yy/2];
+			gr_addr_hi=yy%2;
+
+			/* adjust for page */
+			if (text_page_1) {
+				gr_addr+=0x400;
+			}
+
+			for(xx=0;xx<GR_XSIZE;xx++) {
+
+				if (gr_addr_hi) {
+					temp_col=(ram[gr_addr]&0xf0)>>4;
+				}
+				else {
+					temp_col=ram[gr_addr]&0x0f;
+				}
+
+				for(i=0;i<GR_X_SCALE;i++) {
+					*t_pointer=color[temp_col];
+					t_pointer++;
+				}
+				gr_addr++;
+			}
+		}
+	}
+}
+
+void draw_text(unsigned int *out_pointer,int text_start, int text_end) {
+
+	int bit_set,ch,inverse,flash;
+	int gr_addr;
+	int xx,yy,i,j;
+	unsigned int *t_pointer;
+
+	t_pointer=out_pointer+(text_start*40*TEXT_Y_SCALE*TEXT_X_SCALE);
+
+	for(yy=text_start;yy<text_end;yy++) {
+		for(j=0;j<TEXT_Y_SCALE;j++) {
+			for(xx=0;xx<TEXT_XSIZE;xx++) {
+
+				gr_addr=gr_addr_lookup[yy];
+
+				/* adjust for page */
+				if (text_page_1) {
+					gr_addr+=0x400;
+				}
+
+				ch=ram[gr_addr+xx];
+
+				if (ch&0x80) {
+					flash=0;
+					inverse=0;
+					ch=ch&0x7f;
+				}
+				else if (ch&0x40) {
+					flash=1;
+					inverse=0;
+					ch=ch&0x3f;
+				}
+				else {
+					inverse=1;
+					flash=0;
+					ch=ch&0x3f;
+				}
+
+				for(i=0;i<TEXT_X_SCALE;i++) {
 
 		/* 14 x 16 */
 		/* but font is 5x7 */
-
-		/* FIXME: handle page2 */
-
 
 		if (j>13) bit_set=0;
 		else if (i>11) bit_set=0;
@@ -308,21 +408,122 @@ int grsim_update(void) {
 		}
 
 		t_pointer++;
-					}
+
 				}
 			}
 		}
 	}
-	else {
-		for(y=0;y<YSIZE;y++) {
-			for(j=0;j<PIXEL_Y_SCALE;j++) {
-				for(x=0;x<XSIZE;x++) {
-					for(i=0;i<PIXEL_X_SCALE;i++) {
-						*t_pointer=color[scrn(x,y)];
-						t_pointer++;
-					}
-				}
+}
+
+
+
+void draw_hires(unsigned int *out_pointer,int y_start, int y_end) {
+
+	int i,j,yy,xx;
+	int gr_addr;
+	int temp_col;
+	unsigned int *t_pointer;
+	int last_last_pixel,last_pixel,current_byte,current_pixel,odd=0;
+	int old_high=0,current_high=0;
+
+	t_pointer=out_pointer+(y_start*280*HGR_X_SCALE*HGR_Y_SCALE);
+
+	/* do the hires graphics */
+	for(yy=y_start;yy<y_end;yy++) {
+
+		for(j=0;j<HGR_Y_SCALE;j++) {
+
+			gr_addr=gr_addr_lookup[yy/8]+0x1c00;
+			gr_addr+=0x400*(yy&0x7);
+
+			/* adjust for page */
+			if (text_page_1) {
+				gr_addr+=0x2000;
 			}
+			last_pixel=0;
+			last_last_pixel=0;
+			odd=0;
+
+			for(xx=0;xx<HGR_XSIZE/7;xx++) {
+//				printf("HGR ADDR=%x\n",gr_addr);
+				current_byte=ram[gr_addr];
+
+
+// BBBBBBBB     OOOOOOOO   OO?WW?BB  BB?KK?OO
+// 10101010     01010101   01011010  10100101
+// 1 1 010101   1 0 101010
+// d5           aa         
+
+
+				for(i=0;i<7;i++) {
+					old_high=current_high;
+					current_high=!!(current_byte&0x80);
+					current_pixel=!!(current_byte&(1<<i));
+
+					if (!odd) {
+					int pattern;
+					pattern=last_last_pixel<<2 |
+						last_pixel<<1|
+						current_pixel;
+
+					temp_col=(old_high<<2)|
+						hcolor_hack[pattern][0];
+
+//					printf("Temp col=%d\n",temp_col);
+//					for(k=0;k<HGR_X_SCALE;k++) {
+
+					*t_pointer=hcolor[temp_col];
+					t_pointer++;
+					*t_pointer=hcolor[temp_col];
+					t_pointer++;
+
+					temp_col=(current_high<<2)|
+						hcolor_hack[pattern][1];
+
+					*t_pointer=hcolor[temp_col];
+					t_pointer++;
+					*t_pointer=hcolor[temp_col];
+					t_pointer++;
+					}
+					odd=!odd;
+					last_last_pixel=last_pixel;
+					last_pixel=current_pixel;
+				}
+
+				gr_addr++;
+			}
+		}
+	}
+
+}
+
+
+int grsim_update(void) {
+
+	unsigned int *t_pointer;
+
+	/* point to SDL output pixels */
+	t_pointer=((Uint32 *)sdl_screen->pixels);
+
+	/* get the proper modes */
+
+	if (plaid_mode) {
+		draw_text(t_pointer,0,6);
+		draw_hires(t_pointer,48,112);
+		draw_lowres(t_pointer,28,48);
+	} else if (text_mode) {
+		draw_text(t_pointer,0,TEXT_YSIZE);
+	}
+	else {
+		if (hires_on) {
+			draw_hires(t_pointer,0,192);
+		}
+		else {
+			draw_lowres(t_pointer,0,48);
+		}
+
+		if (mixed_graphics) {
+			draw_text(t_pointer,20,TEXT_YSIZE);
 		}
 	}
 
@@ -364,6 +565,8 @@ int grsim_init(void) {
 		return -1;
 	}
 
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+
 	/* Init screen */
 	for(x=0x400;x<0x800;x++) ram[x]=0;
 
@@ -392,7 +595,7 @@ int color_equals(int new_color) {
 
 
 
-static void plot(void) {
+static void monitor_plot(void) {
 
 	unsigned char c;
 
@@ -426,7 +629,7 @@ static void plot(void) {
 
 int basic_plot(unsigned char xcoord, unsigned char ycoord) {
 
-	if (ycoord>40) {
+	if (ycoord>47) {
 		printf("Y too big %d\n",ycoord);
 		return -1;
 	}
@@ -444,7 +647,7 @@ int basic_plot(unsigned char xcoord, unsigned char ycoord) {
 		return -1;
 	}
 
-	plot();
+	monitor_plot();
 
 	return 0;
 }
@@ -454,7 +657,7 @@ int basic_hlin(int x1, int x2, int at) {
 
 	int i;
 
-	for(i=x1;i<x2;i++) basic_plot(i,at);
+	for(i=x1;i<=x2;i++) basic_plot(i,at);
 
 	return 0;
 }
@@ -494,8 +697,8 @@ static void vtabz(void) {
 
 }
 
-static void vtab(void) {
-
+static void rom_vtab(void) {
+	/* fb5b */
 	a=ram[CV];
 	vtabz();
 }
@@ -512,7 +715,7 @@ static void setwnd(void) {
 	a=0x17;
 // TABV
 	ram[CV]=a;
-	vtab();
+	rom_vtab();
 }
 
 static void vline(void) {
@@ -522,7 +725,7 @@ static void vline(void) {
 	// f828
 vline_loop:
 	s=a;
-	plot();
+	monitor_plot();
 	a=s;
 	if (a<ram[V2]) {
 		a++;
@@ -547,7 +750,7 @@ clrsc3:
 static void setgr(void) {
 
 	// FB40
-	// SETGR 
+	// SETGR
 	soft_switch(TXTCLR);	// LDA	TXTCLR
 	soft_switch(MIXSET);	// LDA	MIXSET
 
@@ -626,7 +829,7 @@ cleop1_begin:
 	a=s;
 	a++;
 	if (a<=ram[WNDBTM]) goto cleop1_begin;
-	vtab();
+	rom_vtab();
 
 	return 0;
 }
@@ -643,49 +846,66 @@ int home(void) {
 	return 0;
 }
 
-int grsim_unrle(unsigned char *rle_data, int address) {
-
-//	int xoffset=0;
-//	int yoffset=0;
+int grsim_unrle_original(unsigned char *rle_data, int address) {
 
 	unsigned char s;
-//	int out_pointer;
 
-	ram[GBASL]=0;	// input address
-	ram[GBASH]=0;
+	ram[GBASL]=0;			/* input address */
+	ram[GBASH]=0;			/* we fake this in this environment */
 
-	x=0;
+	x=0;				/* Set X and Y registers to 0 */
 	y=0;
 
-	ram[BASL]=address&0xff;
-	ram[BASH]=address>>8;
+	ram[BASL]=address&0xff;		/* output address? */
+	ram[BASH]=(address>>8)&0xff;
 
 	ram[CV]=0;
+
+	/* Read xsize, put in CH */
 	ram[CH]=rle_data[y_indirect(GBASL,y)];
 	y++;
-//	ysize=rle_data[1];
+
+	/* Skip ysize, we won't need it */
 	y++;
 
 	while(1) {
+		/* Get run length into a */
 		a=rle_data[y_indirect(GBASL,y)];
+
+		/* 0xff is a special value meaning end */
 		if (a==0xff) break;
+
+		/* Store run length into TEMP */
 		ram[TEMP]=a;
 
+		/* 16-bit increment of GBASL:GBASH */
 		y++;
 		if (y==0) ram[GBASH]++;
+
+		/* Get the color into A */
 
 		a=rle_data[y_indirect(GBASL,y)];
+
+		/* 16-bit increment of GBASL:GBASH */
 		y++;
 		if (y==0) ram[GBASH]++;
 
+		/* Push y on stack */
 		s=y;
 		y=0;
 
 		while(1) {
+			/* store out color */
 			ram[y_indirect(BASL,y)]=a;
+
+			/* 16-bit increment of output pointer */
 			ram[BASL]++;
 			if (ram[BASL]==0) ram[BASH]++;
+
+			/* increment size */
 			x++;
+
+			/* if size longer than width, adjust */
 			if (x>=ram[CH]) {
 				if (ram[BASL]>0xa7) ram[BASH]++;
 				ram[BASL]+=0x58;
@@ -703,10 +923,136 @@ int grsim_unrle(unsigned char *rle_data, int address) {
 				}
 				x=0;
 			}
+
+			/* repeat until use up all of run length */
 			ram[TEMP]--;
 			if (ram[TEMP]==0) break;
 		}
+		/* restore y from stack */
 		y=s;
+	}
+
+	return 0;
+}
+
+int grsim_unrle(unsigned char *rle_data, int address) {
+
+	unsigned char s;
+
+	ram[GBASL]=0;			/* input address */
+	ram[GBASH]=0;			/* we fake this in this environment */
+
+	x=0;				/* Set X and Y registers to 0 */
+	y=0;
+
+	ram[BASL]=address&0xff;		/* output address? */
+	ram[BASH]=(address>>8)&0xff;
+
+	ram[CV]=0;
+
+	/* Read xsize, put in CH */
+	ram[CH]=rle_data[y_indirect(GBASL,y)];
+	y++;
+
+	/* Skip ysize, we won't need it */
+//	y++;
+
+	while(1) {
+
+		/* Get byte into A */
+		a=rle_data[y_indirect(GBASL,y)];
+
+		/* 0xa1 is a special value meaning end */
+		if (a==0xa1) break;
+
+		/* Store run length into TEMP */
+		if ((a&0xf0)==0xa0) {
+			if ((a&0xf)==0) {
+				/* 16-bit increment of GBASL:GBASH */
+				y++;
+				if (y==0) ram[GBASH]++;
+
+				a=rle_data[y_indirect(GBASL,y)];
+				ram[TEMP]=a;
+
+			}
+			else {
+				ram[TEMP]=a&0xf;
+			}
+
+			/* 16-bit increment of GBASL:GBASH */
+			y++;
+			if (y==0) ram[GBASH]++;
+
+			/* Get the color into A */
+			a=rle_data[y_indirect(GBASL,y)];
+
+		}
+		else {
+			ram[TEMP]=1;
+		}
+
+		/* 16-bit increment of GBASL:GBASH */
+		y++;
+		if (y==0) ram[GBASH]++;
+
+		/* Push y on stack */
+		s=y;
+		y=0;
+
+#if 0
+	{
+		printf("Run=%d Color=%x\n",ram[TEMP],a);
+	}
+#endif
+		while(1) {
+			/* store out color */
+			ram[y_indirect(BASL,y)]=a;
+
+			/* 16-bit increment of output pointer */
+			ram[BASL]++;
+			if (ram[BASL]==0) ram[BASH]++;
+
+			/* increment size */
+			x++;
+
+			/* if size longer than width, adjust */
+			if (x>=ram[CH]) {
+				if (ram[BASL]>0xa7) ram[BASH]++;
+				ram[BASL]+=0x58;
+				ram[CV]+=2;
+				if (ram[CV]>14) {
+					ram[CV]=0;
+					if (ram[BASL]<0xd8) {
+						ram[BASL]=ram[BASL]-0xd8;
+						ram[BASH]=ram[BASH]-0x4;
+					}
+					else {
+						ram[BASL]=ram[BASL]-0xd8;
+						ram[BASH]=ram[BASH]-0x3;
+					}
+				}
+				x=0;
+			}
+
+			/* repeat until use up all of run length */
+			ram[TEMP]--;
+			if (ram[TEMP]==0) break;
+		}
+		/* restore y from stack */
+		y=s;
+
+#if 0
+	{
+		grsim_update();
+		int ch;
+		ch=repeat_until_keypressed();
+		grsim_update();
+		if (ch=='q') break;
+	}
+#endif
+
+
 	}
 
 	return 0;
@@ -726,7 +1072,7 @@ int basic_vlin(int y1, int y2, int at) {
 	else       { ram[H2]=y2; ram[V2]=y2; ram[FIRST]=y1; }
 	x=at;
 
-	if (x>48) {
+	if (x>40) {
 		fprintf(stderr,"Error!  AT too large %d!\n",x);
 	}
 
@@ -754,11 +1100,12 @@ int basic_vlin(int y1, int y2, int at) {
 
 
 
-int grsim_put_sprite(unsigned char *sprite_data, int xpos, int ypos) {
+int grsim_put_sprite_page(int page, unsigned char *sprite_data, int xpos, int ypos) {
 
 	unsigned char i;
 	unsigned char *ptr;
 	short address;
+	int cycles=0;
 
 	ptr=sprite_data;
 	x=*ptr;
@@ -768,36 +1115,104 @@ int grsim_put_sprite(unsigned char *sprite_data, int xpos, int ypos) {
 
 	ypos=ypos&0xfe;
 
+							cycles+=28;
+
 	while(1) {
 		address=gr_addr_lookup[ypos/2];
+		address+=(page)<<8;
 		address+=xpos;
+							cycles+=36;
 		for(i=0;i<x;i++) {
 			a=*ptr;
-			if (a==0) {
+							cycles+=17;
+			// all transparent, skip
+			if (a==0xaa) {
 			}
-			else if ((a&0xf0)==0) {
+			// bottom transparent
+			else if ((a&0xf0)==0xa0) {
+							cycles+=8;
 				ram[address]&=0xf0;
-				ram[address]|=a;
+				ram[address]|=(a&0xf);
+							cycles+=19;
 			}
-			else if ((a&0x0f)==0) {
+			// top transparent
+			else if ((a&0x0f)==0xa) {
+							cycles+=8;
 				ram[address]&=0x0f;
-				ram[address]|=a;
+				ram[address]|=(a&0xf0);
+							cycles+=19;
 			}
 			else {
+							cycles+=8;
 				ram[address]=a;
+							cycles+=19;
 			}
 			ptr++;
 			address++;
+							cycles+=13;
 		}
 		ypos+=2;
 		ram[CV]--;
 		if (ram[CV]==0) break;
+							cycles+=18;
+	}
+							cycles+=6;
+	return cycles;
+}
+
+int grsim_put_sprite(unsigned char *sprite_data, int xpos, int ypos) {
+
+	int cycles;
+
+	cycles=grsim_put_sprite_page(ram[DRAW_PAGE],sprite_data,xpos,ypos);
+
+	return cycles;
+}
+
+
+int gr_copy(short source, short dest) {
+
+	short dest_addr,source_addr;
+	int i,j,l;
+
+	for(i=0;i<8;i++) {
+		source_addr=gr_addr_lookup[i]+(source-0x400);
+		dest_addr=gr_addr_lookup[i]+(dest-0x400);
+
+		if (i<4) l=120;
+		else l=80;
+
+		for(j=0;j<l;j++) {
+			ram[dest_addr+j]=ram[source_addr+j];
+		}
 	}
 
 	return 0;
 }
 
-int gr_copy(short source, short dest) {
+int gr_copy_to_current(short source) {
+
+	short dest_addr,source_addr;
+	int i,j,l;
+
+	for(i=0;i<8;i++) {
+		source_addr=gr_addr_lookup[i]+(source-0x400);
+		dest_addr=gr_addr_lookup[i]+(ram[DRAW_PAGE]<<8);
+
+//		if (i<4) l=120;	// only copy 40 lines
+//		else l=80;
+
+		l=120;	// copy 48 lines
+
+		for(j=0;j<l;j++) {
+			ram[dest_addr+j]=ram[source_addr+j];
+		}
+	}
+
+	return 0;
+}
+
+int gr_copy48(short source, short dest) {
 
 	short dest_addr,source_addr;
 	int i,j;
@@ -850,7 +1265,7 @@ scrl1:
 		// SCRL3
 		y=0;
 		cleolz();
-		vtab();
+		rom_vtab();
 		return;
 	}
 	s=a;
@@ -892,7 +1307,7 @@ static void up(void) {
 	if (a>ram[CV]) return;
 
 	ram[CV]=ram[CV]-1;
-	vtab();
+	rom_vtab();
 }
 
 static void bs(void) {
@@ -1056,7 +1471,7 @@ static void tabv(void) {
 	// TABV
 	// fb5b
 	ram[CV]=a;
-	vtab();
+	rom_vtab();
 }
 
 void basic_vtab(int ypos) {
@@ -1103,28 +1518,311 @@ void basic_normal(void) {
 	return;
 }
 
+static unsigned short hlin_addr;
+static unsigned short hlin_hi;
 
-int hlin(int page, int x1, int x2, int at) {
 
-	unsigned short addr;
-	int i,hi;
+int hlin_continue(int width) {
 
-	addr=gr_addr_lookup[at/2];
-	hi=at&1;
+	int i;
 
-	addr+=(page*4)<<8;
-
-	for(i=x1;i<x2;i++) {
-		if (hi) {
-			ram[addr+i]=ram[addr+i]&0x0f;
-			ram[addr+i]|=ram[COLOR]&0xf0;
+	for(i=0;i<width;i++) {
+		if (hlin_hi) {
+			ram[hlin_addr]=ram[hlin_addr]&0x0f;
+			ram[hlin_addr]|=ram[COLOR]&0xf0;
 		}
 		else {
-			ram[addr+i]=ram[addr+i]&0xf0;
-			ram[addr+i]|=ram[COLOR]&0x0f;
+			ram[hlin_addr]=ram[hlin_addr]&0xf0;
+			ram[hlin_addr]|=ram[COLOR]&0x0f;
 		}
-
+		hlin_addr++;
 	}
 
 	return 0;
+}
+
+
+int plot(unsigned char xcoord, unsigned char ycoord) {
+
+	unsigned char c;
+
+	hlin_addr=gr_addr_lookup[ycoord/2];
+	hlin_addr+=(ram[DRAW_PAGE])<<8;
+	hlin_addr+=xcoord;
+
+	hlin_hi=ycoord&1;
+
+	if (hlin_hi) {
+		/* If odd, mask is 0xf0 */
+		ram[MASK]=0xf0;
+	}
+	else {
+		/* If even, mask is 0x0f */
+		ram[MASK]=0x0f;
+	}
+
+	c=ram[COLOR]&ram[MASK];
+	ram[hlin_addr]&=~ram[MASK];
+	ram[hlin_addr]|=c;
+
+	return 0;
+}
+
+
+
+int hlin(int page, int x1, int x2, int at) {
+
+	hlin_addr=gr_addr_lookup[at/2];
+	hlin_hi=at&1;
+
+	hlin_addr+=(page)<<8;
+
+	hlin_addr+=x1;
+	hlin_continue(x2-x1);
+
+	return 0;
+}
+
+static unsigned short vlin_hi;
+
+/* TODO: optimize */
+/* Could make twice as fast if draw neighboring two in one write */
+/* instead of two */
+
+int vlin(int y1, int y2, int at) {
+
+	x=y1;
+	ram[V2]=y2;
+	y=at;
+
+vlin_loop:
+//	for(a=y1;a<y2;a++) {
+
+		ram[TEMPY]=y;
+		a=x;
+		y=a/2;
+
+		ram[OUTL]=gr_addr_lookup[y]&0xff;
+		ram[OUTH]=(gr_addr_lookup[y]>>8)&0xff;
+
+		ram[OUTH]+=ram[DRAW_PAGE];
+
+		vlin_hi=x&1;
+
+		y=ram[TEMPY];	// y=at;
+
+		if (vlin_hi) {
+			ram[y_indirect(OUTL,y)]=ram[y_indirect(OUTL,y)]&0x0f;
+			ram[y_indirect(OUTL,y)]|=ram[COLOR]&0xf0;
+		}
+		else {
+			ram[y_indirect(OUTL,y)]=ram[y_indirect(OUTL,y)]&0xf0;
+			ram[y_indirect(OUTL,y)]|=ram[COLOR]&0x0f;
+		}
+	x++;
+	if (x<ram[V2]) goto vlin_loop;
+
+	return 0;
+}
+
+int hlin_double_continue(int width) {
+
+	x=width;
+
+hlin_loop:
+	y=0;
+	ram[y_indirect(GBASL,y)]=ram[COLOR];
+	ram[GBASL]++;
+	x--;
+	if (x!=0) goto hlin_loop;
+
+//	ram[GBASL]+=width;
+
+//	}
+
+	return 0;
+}
+
+int hlin_setup(int page, int x1, int x2, int at) {
+
+	// page, y, V2, A
+	a=at;
+	y=at/2;
+
+	ram[GBASL]=(gr_addr_lookup[y])&0xff;
+	ram[GBASH]=(gr_addr_lookup[y]>>8);
+
+	ram[GBASH]+=(page);
+
+	ram[GBASL]+=x1;
+
+	return 0;
+
+}
+
+int hlin_double(int page, int x1, int x2, int at) {
+
+	hlin_setup(page,x1,x2,at);
+
+	hlin_double_continue(x2-x1+1);
+
+	return 0;
+}
+
+#if 0
+int collision(int xx, int yy, int ground_color) {
+
+	int page=0;
+	int beach_color;
+	int collide=1;
+
+	hlin_addr=gr_addr_lookup[yy/2];
+
+	hlin_addr+=(page)<<8;
+
+	hlin_addr+=xx;
+
+	beach_color=COLOR_YELLOW|(COLOR_YELLOW<<4);
+
+	if ((ram[hlin_addr]==ground_color) &&
+		(ram[hlin_addr+1]==ground_color) &&
+		(ram[hlin_addr+2]==ground_color)) {
+
+		printf("NOCOLLIDE %x!\n",ground_color);
+		collide=0;
+	}
+
+	if ((ram[hlin_addr]==beach_color) &&
+		(ram[hlin_addr+1]==beach_color) &&
+		(ram[hlin_addr+2]==beach_color)) {
+
+		printf("NOCOLLIDE %x!\n",beach_color);
+		collide=0;
+	}
+
+	printf("COLLIDE %x %x %x not %x %x\n",
+		ram[hlin_addr],ram[hlin_addr+1],ram[hlin_addr+2],
+		ground_color,beach_color);
+
+	return collide;
+}
+#endif
+
+#if 0
+
+void clear_top_a(void) {
+
+	int i;
+
+	ram[COLOR]=a;
+	for(i=0;i<40;i+=2) {
+		hlin_double(ram[DRAW_PAGE],0,40,i);
+	}
+}
+
+void clear_top(int page) {
+	int i;
+
+	ram[COLOR]=0x0;
+	for(i=0;i<40;i+=2) {
+		hlin_double(page,0,40,i);
+	}
+}
+
+void clear_bottom(int page) {
+	int i;
+
+	/* NORMAL space */
+	ram[COLOR]=0xa0;
+	for(i=40;i<48;i+=2) {
+		hlin_double(page,0,40,i);
+	}
+}
+
+#endif
+
+void vtab(int ypos) {
+	ram[CV]=ypos-1;
+}
+
+void htab(int xpos) {
+	ram[CH]=xpos-1;
+}
+
+void move_cursor(void) {
+
+	int address;
+
+	address=gr_addr_lookup[ram[CV]];
+	address+=ram[CH];
+
+	address+=(ram[DRAW_PAGE]<<8);
+
+	ram[BASL]=address&0xff;
+	ram[BASH]=address>>8;
+
+}
+
+void print_both_pages(char *string) {
+	unsigned char temp;
+
+	temp=ram[DRAW_PAGE];
+
+	ram[DRAW_PAGE]=0;
+	move_and_print(string);
+
+	ram[DRAW_PAGE]=4;
+	move_and_print(string);
+
+	ram[DRAW_PAGE]=temp;
+
+}
+
+void move_and_print(char *string) {
+
+	int address;
+
+	address=gr_addr_lookup[ram[CV]];
+	address+=ram[CH];
+
+	address+=(ram[DRAW_PAGE]<<8);
+
+	ram[BASL]=address&0xff;
+	ram[BASH]=address>>8;
+
+	print(string);
+}
+
+
+
+void print(char *string) {
+
+	for(y=0;y<strlen(string);y++) {
+		a=string[y];
+		a=a|0x80;
+		ram[y_indirect(BASL,y)]=a;
+	}
+	ram[BASL]+=strlen(string);
+}
+
+void print_inverse(char *string) {
+
+	for(y=0;y<strlen(string);y++) {
+		a=string[y];
+		if ((a>='a') && (a<='z')) a&=~0x20;	// convert to uppercase
+		a=(a&0x3f);
+
+		ram[y_indirect(BASL,y)]=a;
+	}
+	ram[BASL]+=strlen(string);
+}
+
+void print_flash(char *string) {
+
+	for(y=0;y<strlen(string);y++) {
+		a=string[y];
+		a=(a&0x3f)|0x40;
+		ram[y_indirect(BASL,y)]=a;
+	}
+	ram[BASL]+=strlen(string);
 }

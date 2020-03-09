@@ -1,0 +1,18 @@
+sound effects:
+	one more at start explosion?
+adjust speed:
+	slow for launch, fast for fireworks
+
+
+re-arrange to minimize padding
+remove dead code
+
+Not sure:
+	adjust colors of gradient?
+
+REACH:
+	cycle invariant HPLOT TO
+
+BUGS:
+	sometimes far left firework will wrap?
+

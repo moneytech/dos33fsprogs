@@ -1,0 +1,524 @@
+Challenges found writing an Apple II chiptune player
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   by DEATER (Vince Weaver, vince@deater.net)
+
+  http://www.deater.net/weave/vmwprod/chiptune/
+====================================================
+		11 March 2018
+
+GOAL:
+~~~~~
+  The goal is to design a chiptune player that can play large 
+  (150k+ uncompressed) chiptune files on an Apple II with 48k of RAM
+  and a Mockingboard sound card.
+
+  You in theory could have had an Apple II with 48k in 1977 (if you were rich)
+  and Mockingboards came around 1981, so this all predates the Commodore 64.
+
+USING:
+~~~~~~
+   Boot disk on a real system, or emulator with Mockingboard support.
+
+   Applewin works fine (even under Wine on Linux).
+   MESS does too, it's harder to setup (ROMs) but the audio sounds clearer.
+
+   Key bindings:
+	Spacebar -- pauses
+	Left/Right arrow -- switches songs
+	R -- enables/disables rasterbars
+
+   You can load up your own YM5 files.  Get the "ym5_to_krw" utility found in
+   the repository https://github.com/deater/vmw-meter/
+   Copy the files to the disk image, and edit the filenames in chiptune.s
+   (sorry, don't have code that CATALOGs automatically.  TODO?)
+
+HARDWARE:
+~~~~~~~~~
+
+  Sound
+  =====
+
+  The Mockingboard card has two AY-3-8910 chips, each interfaced with a
+  VIA 6522 I/O chip.  The 6522 more or less acts as a GPIO expander, plus
+  provides programmable timer interrupts (something the Apple II lacks).
+
+  The AY-3-8910 chip provides three channels of square waves, plus noise.
+  There is also a (global) envelope generator (though it's typically 
+  not used that much).  The Mockingboard has two AY-3-8910s, 
+  so you can have up to six channels of sound (3 on right, 3 on left).
+
+  Processor
+  =========
+
+  The Apple II has a 6502 processor running at 1.023 MHz.
+
+  RAM
+  ===
+
+  You could get Apple IIs with as little as 4k of RAM.  Eventually models
+  with 48k, 64k and 128k were popular, but due to I/O and ROM constraints to
+  access more than 48k you had to do bank switching.
+
+  DISK
+  ====
+
+  The typical 5 1/4" floppy was single sided and by the time of DOS3.3 held
+  140k of data.  Roughly 16k was used by DOS though if you wanted a bootable
+  disk.  There are all kinds of ways you can cheat and extend this, as well
+  as using a "real" O/S like ProDOS.  However growing up all I ever really
+  used was DOS3.3 so I'm using it for the sake of tradition.
+
+  Also if you want to run DOS3.3 then RAM from $9600 up through $C000 is
+  used by the O/S.  For this project I use stock DOS3.3 so we lose that
+  amount of RAM (almost 11k).
+
+SOUND DATA:
+~~~~~~~~~~~
+
+The AY-3-8910 chips are very flexible and can be programmed in a wide
+variety of ways.
+
+I'm attempting to play YM files, which are chiptune files popular in
+the Atari and Spectrum communities.  These are RAW register dumps;
+every 50Hz (they tend to be European) the contents of the 14 AY-3-8910
+registers are written.  A raw data stream is 700 bytes (50*14) a second,
+so 42k per minute.  This means holding a raw, uncompressed, data stream
+in RAM becomes a challenge.
+
+COMPRESSION:
+~~~~~~~~~~~~
+
+The register values tend to be repetitive so they compress well.  Especially
+if you interleave the files (have all of the register 0 data in a row,
+followed by all the data for register 1, etc.  This is a lot harder to play
+but you can get compression ratios of over 10 times, see the chart
+at the end of this document).
+
+In addition, the file data can be compressed even more if you notice unused
+bits in the data.  For example, the register data has many unused bits (the
+period data is only 12 bits for each channel).  Also many songs do not use
+the envelope feature at all, freeing up 3 bytes.  So custom compression that
+can make assumptions about the sound format can free up many bytes even in
+a raw register dump format.
+
+A typical ym5 file is compressed with LHA compression which isn't practical
+for compression.
+
+The LZ4 algorithm is nearly as good and has existing 6502 implementations 
+which can be adapted.  It isn't really a streaming algorithm though, so
+it is hard to decompress only a chunk of the file at a time, usually you
+need to decompress the whole file at once (the format works by referencing
+bit sequences from earlier decompressed data).  
+
+This is especially troublesome with interleaved files, as although they
+compress really well, you end up decompressing all of the register-0
+data before you get to register-1 so with limited RAM you have to 
+change how you deal with things.
+
+KRW File Format
+~~~~~~~~~~~~~~~
+
+I ended up creating yet another sound file format, and wrote a converter
+that can convert YM5 files to this KRW format.
+
+The format assumes you take the raw interleaved data, and then break it
+up into 768 byte * 14 register (10.5k) chunks.  These chunks are compressed
+independently and concatenated together.  The player then decompresses
+these chunks one by one as it pays through the song.  The compression
+ratio is not as good as compressing the entire file, but it allows most
+reasonable-length ym5 files to be played.
+
+The format is as follows:
+	3 bytes		Magic Number	KRW
+	1 byte		Skip Value	Bytes to skip to get to first LZ4 data
+	1 byte		Title Center	Spaces to print to center on 40col
+	X bytes		Title String	0-terminated ASCII Title of song
+	1 byte		Author Center
+	X bytes		Author String
+	1 byte		Time Center	
+	14 bytes	Time String	" 0:00 /  M:SS\0" with length filled in
+Repeated block data
+	2 bytes		Chunk Length	Little Endian size of LZ4 block
+	X bytes		LZ4 data
+
+After last block, a value of 0/0 indicates end
+
+	For proper end-of-song detection, the file data should be interleaved
+	and the data at the end should be padded with all $FF characters.
+
+	End of song is detected by an FF in register[1] which in theory
+	is not possible in a valid register dump.
+
+
+PLAYING THE SONG
+~~~~~~~~~~~~~~~~~
+
+  An interrupt routine wakes at 50Hz to write the registers and a few other
+  housekeeping things.
+
+  We load the KRW file totally into RAM before playing.
+
+  The Disk II controller designed by Woz is amazing, but it is timing
+  sensitive so interrupts are disabled when loading from disk.
+
+  We have to have room in RAM for the player (4k) the KRW file (16k)
+  and the current uncompressed data (14k).  See the memory map diagram
+  at the end.
+
+  We also have some visualization going on that plots the amplitude of
+  the three channels, plus has a rasterbar type thing going on in the
+  background.  Originally the graphics was done full speed in a loop outside
+  the interrupt handler, but as we'll see due to glitchy audio we had to
+  do some hackish things.
+
+  The actual player is fairly simple, just reads the interleaved data by
+  striding through memory and writing out to the registers.  A frame only
+  takes maybe 2400 or so cycles.
+
+  I ended up creating a 3-phase state machine to handle co-ordinating the
+  three modes
+	A: playing chunk 1 while copying chunk 3 data to extra buffer
+	B: just playing chunk 2
+	C: playing from extra buffer while decoding next LZ4 block to 1-2-3
+
+  I track these in one variable, with the states in the high bits,
+	$80, $40, $20.  The BIT instruction lets us easily check for these
+	and a ROL instruction easily switches between the states.
+
+
+CHALLENGES:
+~~~~~~~~~~~
+
+  The primary problem is decompression also takes a while, longer than
+  the 50Hz available (20ms).  It turns out the default LZ4 algorithm from
+  qkumba can often take upwards of 700ms, leading to a long pause in
+  the playback.
+
+  First Attempt
+  =============
+
+  My first attempt to work around this was to load the 3 chunks of data
+  as in the naive approach, but in the background copy chunk 3 in RAM,
+  and then play from the copied RAM while decompressing the next LZ4 in
+  the background.
+
+  This first attempt almost worked, but it tried to split up the LZ4
+  decompression into 1/256th chunks to spread across the last chunk being
+  played but the LZ4 is too irregular for that.  Some file-chunks decompress
+  in irregular ways that don't split up well.
+
+  Second Attempt
+  ==============
+
+  One 256-interrupt chunk of data being played takes about 5s and no data
+  chunk seems to take more than 1s to decode.  So we can just cheat and
+  move the graphics code into the interrupt, and have the decoding happen
+  in non-interrupt space.
+
+  This will work for the chiptune player, but it's not going to work well for
+  something like a video game where you are truly trying to have the music
+  playing unattended in the background (unless your music consists only of
+  15s loops).
+
+FITTING ONTO DISK
+~~~~~~~~~~~~~~~~~
+
+Apple II DOS33 filesystem uses 256 byte blocks.  Each file has at least
+one 256 byte Track/Sector list file (and takes an additional one for each
+28k or so of filesize).
+
+DOS itself reserves the first 3 tracks (12k) and in theory the catalog
+reserves an entire track (4k) to hold file info (although you only need
+on 256 byte sector per 7 files).
+
+In addition usually you have a "HELLO" BASIC file that runs at boot
+which is going to take at least 512 bytes.
+
+So even though the Disk II / DOS3.3 can in theory hold 140k, after
+DOS (12k), the Catalog track (4k), HELLO(512 bytes), and our chiptune player
+(4k) we have 24.5k of overhead, with 115.5k free (462 blocks).
+
+The layout of our disk packed to the max with KRW files can be seen
+in the Figure at the end.  We do manage to fit over 30 minutes of music
+on one disk.  It would fit a lot more if we had simple songs that compressed
+better rather than the complex chiptune examples I picked.
+
+
+MEMORY LAYOUT
+~~~~~~~~~~~~~
+
+As can be seen from the memory map below, if we assume our player can fit in 4k
+we have roughly from $2000 to $9600 for memory.  That's $7600 (29.5k).
+
+If we could have single buffered, we could have had 256*3*14 (10.5k) for
+decompress and 19k for file size which would let us play most of the 
+reasonable sized songs on our play list (KRW(3) in table at end).
+
+For double buffer, then we need 256*2*14*2 (14k) for decompress
+and 16k for file size which still works.
+
+VISUALIZATION
+~~~~~~~~~~~~~
+
+  Originally I had the volume bars and rasterbars in userspace running,
+  so it didn't matter how long they took to draw (they'd just get a worse
+  frame rate if the interrupts were taking a while).
+
+  But then I had to move the decompression to userspace, and the visualization
+  into the interrupt handler.
+
+  Then things got interesting.  The visualization was taking so much time that
+  userspace was starved and decompression was not finishing in time, so the
+  sound was corrupted and finished early.
+
+  Thus it was time for some cycle analysis.  Here's what I found.
+
+	Approx max 20,000 cycles in an interrupt
+	       1,500 used by music decode
+	       7,500 used by volume bars
+	      16,200 (!) used by raster bars 
+	       2,000 for misc rest
+
+	So the problem can be seen here!  That 16,200 for raster bars was
+	worst-case, it usually would have been a little less.
+
+  If takes roughly 700,000 cycles to LZ4 decode a block, so even with
+  no interrupt can take 35 frames (0.7s) to finish.
+
+  I added a variable TIME_TAKEN ($88) that you can use to find out how
+  long the last LZ4 decode took.
+
+  With rasterbars turned off:
+	INTRO2: 60@19, 60@36, 62@50 61@1:03 61@1:32 60@2:05 61@2:32
+
+  So roughly $60 (96) frames, or about 2 seconds.
+
+  I went in and optimized the rasterbars code a lot and got it down to
+  about 10k cycles worst case (6k probably average case).
+
+  So now it takes $A0 (160) frames, or about 3 seconds.  This seems to
+  be workable.
+
+Interesting bugs that were hard to debug:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
++ Bug in qkumba's LZ4 decoder, only happened when a copy-block size was
+	exactly a multiple of 256, in which case it would copy
+	an extra time.
+
++ Bug where the box-drawing was starting at 0 rather than at Y.
+	Turns out I was padding the filename buffer with A0 but going
+	one too far and it was writing A0 to the first byte of the
+	hlin routine, and A0 is a LDY # instruction.
+
++ Our old friend: forgetting the '#' so we're comparing against some random
+	zero page value rather than a constant
+
++ Related, the accidentally put in a $ when I meant for it to be decimal.
+	I was copying to $14 pages instead of 14, overwriting the DOS buffers
+	which I didn't notice until I tried to load the next file.
+
+
+
+FIGURES/TABLES
+~~~~~~~~~~~~~~
+
+
+Memory Map
+==========
+
+(not to scale)
+
+ ------- $ffff
+| ROM/IO|
+ ------- $c000
+|DOS3.3 |
+ -------| $9600
+|       |
+|       |
+|  FREE |
+|       |
+|       |
+|------- $0c00
+|GR pg 1|
+|------- $0800
+|GR pg 0|
+ ------- $0400
+|       |
+ ------- $0200
+|stack  | 
+ ------- $0100
+|zero pg|
+ ------- $0000
+
+
+
+File Sizes
+==========
+						Disk(3)
+		time	ym5	KRW(3)	KRW(2)	Blocks  On
+		~~~~	~~~	~~~~~~	~~~~~~	~~~~~~~~~~	
+KORO.KRW	0:54	?	 2707	 3039	 12
+FIGHTING.KRW	1:40	?	 3061	 3316	 13
+CAMOUFLAGE.KRW	1:32	1162	 4013	 4972	 17	17 
+DEMO4.KRW	2:05	1393	 3824	 6336	 16	16
+SDEMO.KRW	2:12	1635	 5215	 7598	 22	22
+CHRISTMAS.KRW	1:32	1751	 4973	 5811	 21	21	
+HARKONEN.KRW	2:46	1803	 7256	 ????	 30	30
+HOLIDAYS.KRW	2:10	2119	 5863	 ????	 24
+SPUTNIK.KRW	2:05	2164	 8384	10779	 34	34
+DEATH2.KRW	2:27	2560	 8056	10295	 33	33
+CRMOROS.KRW	1:29	2566	 8007	 9565	 33	33
+TECHNO.KRW	2:23	2630	 8896	11126	 36	36
+WAVE.KRW	2:52	2655	 8365	11318	 34	34
+LYRA2.KRW	3:04	2870	 9816	14418	 40	40
+INTRO2.KRW	2:59	3217	 9214	 9294	 37	37
+MMCM.KRW	2:49	3250	11844	 ????	 48
+ROBOT.KRW	1:26	3448	 7717	 8337	 32	32
+UNIVERSE.KRW	1:49	4320	 9957	11225	 40	40
+RANDOM.KRW	2:33	4814	12415	 ????	 50	50
+NEURO.KRW	3:47	8681	22328	25168	 89
+AXELF.KRW	10:55	9692	47971	54420	189
+
+							----- -----
+							475	33:14
+Notes: my home-made songs don't have ym5 sizes as I don't have a
+working LHA encoder to make a real size.
+
+
+Disk Usage
+~~~~~~~~~~
+
+Detailed sector bitmap:
+
+	                1111111111111111222
+	0123456789ABCDEF0123456789ABCDEF012
+$0:	$$$MLLKKKJJJIIHHG#NNOOOPPQQbCDDEEFF
+$1:	$$$MLLKKKkJJIIHHG#NNOOpPPQQBCDDEEFF
+$2:	$$$MLLKKKKJJIIHHG#NNOOPPPQQBCDDEEFF
+$3:	$$$MmLlKKKJJIIHHG#NNOOPPPQQBCDDEEFF
+$4:	$$$MMLLKKKJJIIiHG#NNOOPPPQQBCDeEEFF
+$5:	$$$MMLLKKKJJIIIHG#NNOOPPPQQBCDEEfFF
+$6:	$$$MMLLKKKJJIIIHh#NNOOPPPQQBCDEEFFg
+$7:	$$$MMLLKKKJJIIIHH#NNOOPPPQQBCDEEFFG
+$8:	$$$MMLLKKKJJIIIHH#NNOOPPPQQBCDEEFFG
+$9:	$$$nMLLKKKJJjIIHH#NNOOPPqQQBCDEEFFG
+$A:	$$$NMLLKKKJJJIIHH#NNOOPPQQQBCDEEFFG
+$B:	$$$NMLLKKKJJJIIHH#NNOOPPQQ.BCDEEFFG
+$C:	$$$NMLLKKKJJJIIHH#NNOOPPQQ.BCDEEFFG
+$D:	$$$NMLLKKKJJJIIHH@NoOOPPQQ.BCDEEFFG
+$E:	$$$NMLLKKKJJJIIHH@AOOOPPQQ.cCDEEFFG
+$F:	$$$NMLLKKKJJJIIHH@aOOOPPQQ.CdDEEFFG
+
+Key: $=DOS, @=catalog used, #=catalog reserved, .=free
+
+	As you can see, only 5 sectors (1.25k) free.
+
+	a HELLO			g DEMO4.KRW		m SDEMO.KRW
+	b CHIPTUNE_PLAYER	h HARKONEN.KRW		n SPUTNIK.KRW
+	c CAMOUFLAGE.KRW	i INTRO2.KRW		o TECHNO.KRW
+	d CHRISTMAS.KRW		j LYRA2.KRW		p UNIVERSE.KRW
+	e CRMOROS.KRW		k RANDOM.KRW		q WAVE.KRW
+	f DEATH2.KRW		l ROBOT.KRW
+
+
+YM5 Compression Study
+=====================
+
+For example, intro2.ym5
+
+raw:			125440 bytes
+
+Compressed, frame at a time (r0..r13, repeat)
+
+lzss:			 44154 bytes
+gzip:			 17119 bytes
+lz4:			 14666 bytes (-16) (14685 -9, 21377 default)
+bzip2:			 12685 bytes
+lzma (xz)		  5312 bytes
+
+Interleaved then Compressed (all of r0 in a row, then all of r1, etc).
+
+lzss/interleaved:	  7981 bytes
+lha/interleaved:	  3217 bytes   <=== default used by ym5 format
+lz4/interleaved:	  3190 bytes (-16) (8914 default, 3209 -9)
+bzip2/interleaved	  3017 bytes
+gzip/interleaved:	  2759 bytes
+lzma/interleaved:	  2129 bytes
+
+Split up, Interleaved, LZ4
+lz4,1024*14 chunks	7971 bytes (-16) (14k output buffer)
+lz4,768*14 chunks	9214 bytes (-16) (10.5k output buffer)
+lz4,512*14 chunks	9294 bytes (-16) (7k output buffer)
+
+Diff (each frame only update registers that change via bitmask)
+	This is method I used in the KSP demo
+simple diff:		 69224 bytes
+lzss/diff:		 31919 bytes
+lz4/diff:		 13669 bytes (11431 -9)
+gzip/diff:		 10821 bytes
+bzip2/diff:		 10477 bytes
+lzma/diff:		  7257 bytes
+
+
+
+
+Interrupt Timing / AY write latency:
+====================================
+
+	Trying to find out why some songs, especially DEMO4 do not sound
+	as good as they should compared to my pi-chiptune player and
+	also emulation.
+
+	On DEMO4 one issue shows up with the envelope is enabled
+	on Channel A in the first 10s.  In some cases the output just
+	doesn't happen.
+
+	I've analyzed the code in memory and as far as I can tell everything
+	is being uncompressed and played properly.
+
+	I thought maybe it was a timing issue (for example, on my Pi player
+	it only takes roughly 100us to program all the registers, wheras
+	on the Apple II it takes at least 3-6x longer).
+
+	So it could just be an issue of programming the Envelope register
+	values mid-output and so you get a few cycles where it's non-atomic?
+	Really though any inconsistency should be < 1ms.
+
+
+
+	For the numbers below, we assume 13 regs being written (as it's
+	unusual in many YM songs to update R13 very often, and we skip
+	it often (0xff) as writing the register (even with the same value)
+	apparently resets the counter.
+
+
+	Originally roughly 1500 cycles from start of interrupt
+	to all AY registers being written.
+		1600
+
+	Moved clock to after, near the visualization stuff, more like
+		1534 = 13+ (117*13)
+
+	Load frame data for next time at end of IRQ, instead of begin
+		1185 =	13+2+(90*13)
+
+	Inlined the mockingboard write routine
+		1029 =	13+2+(78*13)
+
+	Only write registers that change.  Added 6 cycles per loop
+		1107 worst case			= 13+2+(10+5+62+7)*13
+		316 if only one reg changed	= 13+2+(18*13)+67
+
+	Was unnecessarily saving/restoring value to mem, save 2 cycles/loop
+		1081 worst case			= 13+2+(10+5+60+7)*13
+		314 if only one reg changed	= 13+2+(18*13)+65
+
+	Tried unrolling.  Just unrolling one channel increased the size
+	of the executable by 454 bytes.  By unrolling you can shave a few
+	cycles off by hard-coding the current reg rather than using X.
+		1235 to write both channels
+		627 worst case one channel	= 13 + (10+37)*13
+		360 one reg both channels
+		180 one reg			= 13 + (10)*13+37
+

@@ -1,0 +1,99 @@
+                         Still Alive for the Apple II
+                               in roughly 16k
+
+                           By Deater (Vince Weaver)
+					vince@deater.net
+
+BACKGROUND
+~~~~~~~~~~
+	A few years back I implemented Valve's Portal in Applesoft BASIC.
+
+	At the end it played Still Alive, but in horrible single-channel
+	speaker beeps.  I always wanted to have this sound better.
+
+	So here is the end result.  Still Alive in 6-Channel Mockingboard
+	Sound in 80 column with cursor effects.  Also in 40 column if
+	your display can't handle 80 cols.  And if you don't have a
+	Mockingboard, then a simpler version using P. Lutus'
+	Electric Duet 2-channel audio for the stock speaker.
+
+
+
+Fun fact:
+	The letter 'Z' does not appear at all in the lyrics to the song.
+	(Noticed when I had to edge comparison for uppercase off by one)
+
+Challenges:
+	+ 6-channel audio.  Really its 4-channel (from a MOD file)
+		but it actually does load and play audio on all 6 channels.
+	+ Fitting it all in 48k (want to avoid disk routines if can)
+	+ Printing the ASCII art (naive implementation takes longer than 50Hz)
+		The ASCII art is roughly 7k.  Thought of decompressing
+		on the fly, but the LZ4 code is not re-entrant and
+		the music is already decompressing on the fly.
+	+ Re-using the Lyrics for both the Mockingboard and Electric Duet
+		versions.
+	+ Squeezing the compressed image into memory leaving room for
+		all the code to be decompressed while leaving enough
+		room that DOS still has room to load things.  It's
+		an *extremely* tight fit.
+	+ An odd issue where the 80col display would get corrupted
+		if we set HIRES without explicitly setting LORES
+		before doing PR#3
+
+
+Goal: Binary fits in 16k (16384 bytes)
+
+note						size (bytes)
+---------------------				------
+initial music player:				 2078
+add raw ascii art:				 9142
+add 3-channel music+lyrics,then slim a bit:	18787
+initial 40 col support:				18864
+have art loading properly 40col:		18910
+lz4 encode the ascii art:			15529
+revert because lz4 code not re-entrant:		18910
+add 4-channel music (KR4):			20128
+add cursor (a bit distracting):			20162
+feature complete 40 col:			20180
+intial 80 col support:				20191
+80 col cursor:					20344
+strip out some unneeded text printing:		19962
+merge ED and MB code:				24993
+properly select between versions:		25001
+merge the ED and MB lyrics:			22828
+80 column ED, wait for keypress+reboot at end:	22852
+Crazy compression:
+Remove mockingboard detection:			16343
+
+Memory Map:
+
+
+
+0000:		Zero Page
+0100:		Stack
+0400:		Text Page 0 (AUX 0400: 80 column text)
+
+2000:		HGR Page0
+4000:		HGR Page1
+9600:		DOS		37.5k
+C000:		I/O Space
+D000:		ROM
+FFFF:		END
+
+
+Plan:
+	Load compressed 16k image ($4000) at $5900 - $9900
+		We use MAXFILES 1 to give us some extra room
+		just before DOS
+
+	Decompress ENDING sequence at $1800 - $4000
+		(writes background to HGR graphics automatically)
+
+	STILL_ALIVE:
+		+  $0800 - $5900 
+			$2e2d of code
+			$2282 of KR4 music *or*
+			$0842 of ED music 
+		+  Sound buffers ($3800, 14k) at $5e00 - $9600
+

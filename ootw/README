@@ -1,0 +1,242 @@
+Another / Out-of-This World Demake for Apple II+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	by Vince "Deater" Weaver (vince@deater.net) 
+		http://www.deater.net/weave/vmwprod/ootw/
+	Disk and LZ4 routines by qkumba
+
++ The game "Another World" was released in 1991.
+	Written by Eric Chahi.
+  It was eventually ported to many systems (I played it on IBM PC).
+
+  It even got an Apple IIgs port (the IIgs is 16-bit with fancy
+	graphics and sound).  However you couldn't play it on
+	earlier Apple II systems... until now.
+
++ I was inspired to do this by this amazing PICO-8 version of:
+	https://liquidream.itch.io/another-world-survival
+
+  and thought the Apple II lo-res palette (15 colors, 40x48 graphics)
+  might be just barely enough to do it justice.
+
+==================
+Game controls:
+==================
+
+  This info appears while loading too, but if you are in an emulator with
+	fast disk access it might not be on the screen long enough to see.
+
+	D ->		- move right (twice to run)
+	A <-		- move left (twice to run)
+	W up		- jump
+	S down		- crouch / pickup
+	space		- kick / gun
+	L		- charge weapon
+
+  During the intro, you can press R to make it repeat forever.
+
+  Hints for those who have never actually played the original game:
+
+	+ At initial arrival, hit up a bunch of times to escape the
+		tentacle monster.  On an original II w/o autorepeat
+		you might have to bang on the keyboard a lot.
+	+ You can kick some enemies.  Crouch-kicking is sometimes
+		a bit easier than stand-kicking.
+	+ When running (i.e. after pressing left or right twice)
+		you can press "up" to run-jump which is faster than
+		plain running.  That might be useful if you need
+		to out-run something.
+	+ When you get the gun, use space to fire the laser.
+		You can use "L" to charge your gun for special actions.
+		Charge a little bit then press "L" (or any key)
+		to create a shield.
+		Charge a longer time (a few seconds, when the charge
+		ball gets bigger) and it will make a giant blast capable
+		of destroying doors and shields.
+
+
+  Note: the original Apple II had no up/down buttons, which is why
+	you can also use WASD for movement.  Different emulators handle
+	this differently, but if for some reason up/down is not working
+	try using W/S instead.
+
+  Joystick support: none yet?
+	It should be possible, I just haven't had time to implement yet.
+
+  Keyboard Limitations:
+	Note, Apple II has simplistic keyboard support.
+	In general it's not possible to read more than one key at a time.
+	Additionally, on older models there's no auto-repeat unless you
+		hold down the REPT key, which makes running difficult.
+	This means it's really not possible to use the keyboard the
+		same way as the original game (which had you do things
+		like holding down spacebar to charge the gun and then
+		firing when you release it.  Same for running faster
+		by holding left/right and space at the same time).
+
+==================
+Development notes:
+==================
+
+Ootw Memory map:
+	00	zero page
+	01	stack
+	02	disk-filename (30 bytes)
+	03	nibble table/disk data
+	04-07	GR page0
+	08-0b	GR page1
+	0c-0f	background  ($c00 = disk load buffer)
+	10-13	background overlay
+	14-16	loader
+	17-bf	program-data (41.25k)
+	bc-bf   earthquake background (shifted)
+	c0-cf	I/O
+	d0-ff	ROM
+
+
+Intro Memory map:
+	00	zero page
+	01	stack
+	02	disk filename (30 bytes)
+	03	nibble table/disk data
+	04-07	GR page0
+	08-0b	GR page1
+	0c-0f	offscreen data  ($c00 = disk load buffer)
+	10-13	offscreen data2
+	14-16	loader
+	17-89	program/compressed-data (30.25k)
+	90-bf	currently decompressed level data (12k)
+	c0-cf	I/O
+	d0-ff	ROM
+
+
+Intro Memory squeeze!
+
+	10,748 over	all graphics in
+	10,734 over	remove extraneous blank bg image
+	 8,658 over	re-arrange memory map, 42k avail now
+	 8,562 over	move gr_make_quake out of common code
+	 8,374 over	remove extraneous code (mostly put_sprite_flipped)
+	 5,469 over     allow changing bg on fly in sequence
+	 4,122 over	modify cyan frames to be on fly
+	 2,749 over	do same for zappo routines
+	 2,493 over	squish disk loader vars to page 3
+	 2,165 over	horrible hack to auto-go to next image in sequence
+	 2,114 over	move bg loading into seq
+	 2,053 over	make elevator indicator a loop
+	 1,347 over	use LZ4 instead of RLE
+
+Gave up, see if we can compress in chunks and decompress, sort of like
+my chiptune player does.
+
+
+Let's take a 12k region of memory = $3000
+	$C000 - $3000 = starting at $9000
+
+
+ID1 =	1461		2143\
+ID2 =   1759		2687|--- together in 01
+ID3 =	1195		1879/
+ID4 =   2514		8280\--- in 04
+ID5 =	1947		3492/
+ID6 =	2584		3610\ --- in 06
+ID7 =   2834		3606/
+ID8 =	3705		4918 | -- in 08
+ID9 =	4494		5901\  -- in 09
+ID10 =	3397		5558/
+	=====          ======
+	25890             12k
+
+
+ootw memory squeeze:
+	after full rope sequence in:	23065
+	make transparent overlays:	13971
+	add end-of-l1 cutscene:		26464
+	make transparent overlays:	17821
+	add in rest of end cutscene	23906
+	make those transparent		21236
+
+
+ootw2 memory squeeze:
+	before intro			3872
+	after intro			9234
+
+
+
+LOADER=1400		TITLE=1.75k = 7 pages = load at $D00
+	2560 max size allowed
+
+
+L2 Memory map:
+	00	zero page
+	01	stack
+	02	disk-filename
+	03	nibble table/disk data
+	04-07	GR page0
+	08-0b	GR page1
+	0c-0f	offscreen data  ($c00 = disk load buffer)
+	10-13	offscreen data2
+	14-16	loader
+
+	17+	game	
+
+	c0-cf	I/O
+	d0-ff	ROM
+
+
+
+since there seems to be vague interest in this, reasons to use the
+various graphics modes.
+
+lores benefits:
++ 40x48, 15 colors (two greys) (which is fine, as I use one for sprite transparency)
++ hardware page flipping
++ each display only 1kB (leaving lots of room for code) (also fast to clear screen)
++ (software) sprites and animations are relatively small
+
+lores downsides:
++ blocky
++ pixels are rectangular
++ framebuffer is non-linear (to get to next line requires a lookup table, not a simple add)
++ odd/even lines are high/low nibble in a byte, so to draw sprites properly need a lot of shifting an masking (I cheat and only allow sprites on even lines)
++ framebuffer has "memory holes" between lines.  These are areas of memory reserved for expansion card use, so you can't just load a 1kB image straight to the framebuffer as it could break things.
++ NTSC artifact fringing between colors
++ lores PAGE2 is not frequently used so is broken in some emulators and on some early IIgs models
+
+
+hires benefits:
++ 140x192 6 colors
++ hardware page flipping
+
+hires downsides:
++ non-linear framebuffer even worse than lo-res
++ 8kB per page.  two pages of hires takes 1/3 of total RAM in an Apple II+
++ NTSC artifact color.  If the bit patterns in adjacent pixels is 00 it makes black, 11 makes white, so if you join two different colors you get lines between them
++ you get 7 pixels per 2-bytes.  Which means a lot of dividing by 7, slow on 6502
++ each 3.5 pixels has a bit indicating palette (black,white,green,purple) or (black,white,orange,blue).  You get zx-spectrum like color clash if you try to mix colors too close together
++ to get fast software sprites usually you make a set of 7 pre-shifted versions of the sprites, which takes up a lot of room
+
+
+
+double-lores
++ 80x48, 15 colors
++ requires IIe or newer (80 column card)
++ requires drawing extra 1kB of data to bank-switched AUX RAM
++ AUX ram colors are shifted one bit to left from main bank colors
++ while it's possible to get hardware page flipping, it's really complex
+
+double-hires
++ 140x192, 15 colors!
++ requires IIe or newer and 128k of RAM
++ requires drawing 8k of additional data to bank-switched AUX RAM
++ again, page flipping is complex
+
+
+In any case, I chose lo-res for the Another World conversion for 3 reasons
+1. Another World traditionally has 16 colors (and I like the lo-res colors)
+2. I wanted to fit levels in 48k, and as many as possible on a 140k disk
+3. I am too lazy to implement a full hi-res sprite library
+
+
+The recent C64 Another World conversion looks much more impressive and hi-res,
+but I think they use a 1MB cartridge just for the intro movie alone
+(which is possible larger than the size of the original game for the Amiga).

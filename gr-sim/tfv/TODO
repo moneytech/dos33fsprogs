@@ -1,0 +1,55 @@
+Known bugs:
++ When moving to new screen can get stuck or else wrap at weird offset
++ Weird glitch at top of screen when printing damage during battle
++ No sound/music on Linux version
++ It is not possible to trigger the final battle
++ Cannot save game
+
+Soon:
+
++ Battle Sequence
+--> Sound effects
+--> enemy uses magic
+--> Enemy more likely to spawn on appropriate territory
+--> green background on anti-damage printing
+--> Disable vortex cannon until you get it from Ken
+--> Balance the battles
+--> Do something with experience/leveling up
+
++ Ending:
+--> Boss battle w susie
+--> Puzzle.  Warn if not have all parts
+--> Erase door once solve puzzle
+--> Light goes on when solve puzzle?  Draw LED light going to sensor
+
++ Worldmap
+--> Make location inverse text to offset it from dialog?
+--> Make actions inverse to highlight
+--> Start with 0 money
+--> Face proper way when entering/leaving certain places (fountain?)
+--> Play with female hero
+
++ Game over screen
+--> Pause 2 seconds
+--> Ask "Continue: Y/N?"
+
++ Enable getting back on spaceship (with better animation)
++ Better collision detection on Spaceship land
++ Better collision detection/walk on+off in College Park
++ Riding animals
+
+
++ Make transparent color grey2 rather than black
+
+Credits:
++ Running on bird.  Stars and words in sky, mountain
++ Scrolling trees?
++ Guinea pig running alongside?
++ Then spaceship flying with planet in the sky
+
+Not soon:
+
++ Play as either DEATER or FROGGY
++ Allow spaceship to land on arbitrary grass space
++ Toggle lowercase/uppercase text
+
