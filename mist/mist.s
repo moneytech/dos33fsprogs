@@ -8,11 +8,14 @@
 ; Zero Page
 	.include "zp.inc"
 	.include "hardware.inc"
-
+	.include "common_defines.inc"
+	.include "common_routines.inc"
 
 mist_start:
 	;===================
 	; init screen
+	;===================
+
 	jsr	TEXT
 	jsr	HOME
 	bit	KEYRESET
@@ -21,6 +24,15 @@ mist_start:
 	bit	PAGE0
 	bit	LORES
 	bit	FULLGR
+
+	;=================
+	; set up location
+	;=================
+
+	lda	#<locations
+	sta	LOCATIONS_L
+	lda	#>locations
+	sta	LOCATIONS_H
 
 	lda	#0
 	sta	DRAW_PAGE
@@ -32,37 +44,6 @@ mist_start:
 	sta	CURSOR_X
 	sta	CURSOR_Y
 
-	;=================
-	; init vars
-	;	FIXME: we could be re-called from other books
-	;	so don't set location here
-
-	lda	#0
-	sta	LOCATION
-	lda	#0
-	sta	DIRECTION
-
-
-	lda	LOCATION
-	bne	not_first_time
-
-	; first time init
-	lda	#0
-	sta	CLOCK_MINUTE
-	sta	CLOCK_HOUR
-	jsr	clock_inside_reset
-
-	lda	#0
-	sta	GEAR_OPEN
-
-; debug
-;	lda	#1
-;	sta	GEAR_OPEN
-;	jsr	open_the_gear
-
-not_first_time:
-
-
 	; set up initial location
 
 	jsr	change_location
@@ -70,6 +51,11 @@ not_first_time:
 	lda	#1
 	sta	CURSOR_VISIBLE		; visible at first
 
+	; init the clock bridge
+	jsr	raise_bridge
+
+	; init the gear
+	jsr	open_the_gear
 
 
 game_loop:
@@ -92,18 +78,22 @@ game_loop:
 	; handle special-case forground logic
 	;====================================
 
+	; handle gear opening
+
 	lda	GEAR_OPEN
 	beq	not_gear_related
 
 	jsr	check_gear_delete
 not_gear_related:
 
+	; handle clock puzzles
+
 	lda	LOCATION
-	cmp	#25     ; clock puzzle
+	cmp	#MIST_CLOCK_PUZZLE	; clock puzzle
 	beq	location_clock
-	cmp	#27
+	cmp	#MIST_CLOCK_INSIDE
 	beq	location_inside_clock
-	bne	nothing_special
+	bne	location_generator
 
 location_clock:
 	jsr	draw_clock_face
@@ -112,6 +102,18 @@ location_inside_clock:
 	jsr	draw_clock_inside
 	jmp	nothing_special
 
+	; handle generator puzzle
+location_generator:
+	cmp	#MIST_GENERATOR_ROOM
+	bne	nothing_special
+	lda	DIRECTION
+	and	#$f
+	cmp	#DIRECTION_N
+	bne	nothing_special
+
+	jsr	generator_update_volts
+	jsr	generator_draw_buttons
+	jmp	nothing_special
 
 nothing_special:
 
@@ -154,22 +156,131 @@ room_frame_no_oflo:
 really_exit:
 	jmp	end_level
 
+;=================
+; special exits
 
-
-exit_level:
-	lda	#2
+go_to_meche:
+	lda	#LOAD_MECHE
 	sta	WHICH_LOAD
 
+	lda     #MECHE_INSIDE_GEAR
+        sta     LOCATION
+
+        lda     #DIRECTION_E
+        sta     DIRECTION
+
+	jmp	set_level_over
+
+pad_special:
+	lda	#MIST_TOWER2_PATH
+	sta	LOCATION
+	jsr	change_location
+
+	rts
+
+leave_tower2:
+	lda	#MIST_TOWER2_TOP
+	sta	LOCATION
+
+	lda	#DIRECTION_W
+	sta	DIRECTION
+
+	jsr	change_location
+
+	rts
+
+leave_tower1:
+	lda	#MIST_TOWER1_TOP
+	sta	LOCATION
+
+	lda	#DIRECTION_E
+	sta	DIRECTION
+
+	jsr	change_location
+
+	rts
+
+
+green_house:
+
+	; FIXME: handle switch separately
+
+	lda	#MIST_GREEN_SHACK
+	sta	LOCATION
+
+	jsr	change_location
+
+	rts
+
+
+enter_octagon:
+
+	lda	#OCTAGON_TEMPLE_DOORWAY
+	sta	LOCATION
+
+	lda	#LOAD_OCTAGON
+	sta	WHICH_LOAD
+
+	jmp	set_level_over
+
+enter_viewer:
+
+	lda	#VIEWER_STEPS
+	sta	LOCATION
+
+	lda	#LOAD_VIEWER
+	sta	WHICH_LOAD
+
+	jmp	set_level_over
+
+enter_channel_main:
+
+	lda	#CABIN_OUTSIDE
+	sta	LOCATION
+
+	lda	#LOAD_CABIN
+	sta	WHICH_LOAD
+
+	lda	#DIRECTION_E
+	sta	DIRECTION
+
+	jmp	set_level_over
+
+enter_channel_clock:
+
+	lda	#CABIN_CLOCK_PATH
+	sta	LOCATION
+
+	lda	#LOAD_CABIN
+	sta	WHICH_LOAD
+
+	lda	#DIRECTION_N
+	sta	DIRECTION
+
+	jmp	set_level_over
+
+enter_stoneyship:
+	lda	#STONEY_SHIP_STERN
+	sta	LOCATION
+
+	lda	#DIRECTION_N
+	sta	DIRECTION
+
+	lda	#LOAD_STONEY
+	sta	WHICH_LOAD
+
+set_level_over:
 	lda	#$ff
 	sta	LEVEL_OVER
 
-        rts
+	rts
 
 
 	;==========================
 	; includes
 	;==========================
 
+.if 0
 	.include	"gr_copy.s"
 	.include	"gr_offsets.s"
 	.include	"gr_pageflip.s"
@@ -179,40 +290,32 @@ exit_level:
 	.include	"decompress_fast_v2.s"
 	.include	"keyboard.s"
 	.include	"draw_pointer.s"
-
 	.include	"audio.s"
-
-	.include	"graphics_island/mist_graphics.inc"
-
 	.include	"end_level.s"
 
-	; puzzles
+	.include	"common_sprites.inc"
+.endif
 
+
+	; graphics data
+	.include	"graphics_mist/mist_graphics.inc"
+
+	; puzzles
 	.include	"clock_bridge_puzzle.s"
 	.include	"marker_switch.s"
-	.include	"brother_books.s"
+	.include	"generator_puzzle.s"
 
 	; linking books
 
-	.include	"link_book_mist.s"
-
 	; letters
-
 	.include	"letter_cat.s"
 
-
-	.include	"common_sprites.inc"
-
-	.include	"leveldata_island.inc"
-
-
-
-
+	; level data
+	.include	"leveldata_mist.inc"
 
 ;.align $100
 ;audio_red_page:
 ;.incbin "audio/red_page.btc"
-audio_link_noise:
-.incbin "audio/link_noise.btc"
+
 
 

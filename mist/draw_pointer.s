@@ -2,12 +2,10 @@
 	; draw pointer
 	;====================================
 
-	lda	CURSOR_VISIBLE
-	bne	draw_pointer
-	jmp	no_draw_pointer
 
 draw_pointer:
 
+	; point sprite to right location (X,Y)
 
 	lda	CURSOR_X
 	sta	XPOS
@@ -17,9 +15,20 @@ draw_pointer:
 	; see if inside special region
 	ldy	#LOCATION_SPECIAL_EXIT
 	lda	(LOCATION_STRUCT_L),Y
-	bmi	finger_not_special	; if $ff not special
-	cmp	DIRECTION
-	bne	finger_not_special	; only special if facing right way
+	cmp	#$ff
+	beq	finger_not_special	; if $ff not special
+
+;	lda	(LOCATION_STRUCT_L),Y
+;	cmp	#DIRECTION_ANY
+;	beq	was_any
+
+	lda	DIRECTION
+	and	#$f
+
+	and	(LOCATION_STRUCT_L),Y
+	beq	finger_not_special	; only special if facing right way
+
+;was_any:
 
 	; see if X1 < X < X2
 	lda	CURSOR_X
@@ -47,12 +56,33 @@ finger_grab:
 	lda	#1
 	sta	IN_SPECIAL
 
+	lda	CURSOR_VISIBLE		; if not visible skip
+	bne	really_draw_grab
+
+	rts
+
+really_draw_grab:
+
+	lda	DIRECTION
+	and	#DIRECTION_ONLY_POINT
+	bne	special_but_point
+
 	lda     #<finger_grab_sprite
 	sta	INL
 	lda     #>finger_grab_sprite
 	jmp	finger_draw
 
+special_but_point:
+	jmp	finger_point
+
 finger_not_special:
+
+	lda	CURSOR_VISIBLE		; if not visible skip
+	bne	really_not_special
+
+	rts
+
+really_not_special:
 
 	; check for left/right
 
@@ -66,98 +96,79 @@ finger_not_special:
 	; otherwise, finger_point
 
 finger_point:
+	lda	HOLDING_PAGE
+	and	#$c0
+	beq	real_finger_point
+	cmp	#HOLDING_BLUE_PAGE
+	beq	blue_finger
+	cmp	#HOLDING_WHITE_PAGE
+	beq	white_finger
+
+red_finger:
+	lda     #<finger_red_page_sprite
+	sta	INL
+	lda     #>finger_red_page_sprite
+	jmp	finger_draw
+
+blue_finger:
+	lda     #<finger_blue_page_sprite
+	sta	INL
+	lda     #>finger_blue_page_sprite
+	jmp	finger_draw
+
+white_finger:
+	lda     #<finger_white_page_sprite
+	sta	INL
+	lda     #>finger_white_page_sprite
+	jmp	finger_draw
+
+real_finger_point:
 	lda     #<finger_point_sprite
 	sta	INL
 	lda     #>finger_point_sprite
 	jmp	finger_draw
 
 check_cursor_left:
-	ldy	#LOCATION_BGS
-	lda	(LOCATION_STRUCT_L),Y
+	jsr	lookup_direction
 
-check_left_north:
-	ldy	DIRECTION
-	cpy	#DIRECTION_N
-	bne	check_left_south
-
-handle_left_north:
-	; check if west exists
-	and	#BG_WEST
+	and	#$f
 	beq	finger_point
-	bne	finger_left
-
-check_left_south:
-	cpy	#DIRECTION_S
-	bne	check_left_east
-
-handle_left_south:
-	; check if east exists
-	and	#BG_EAST
-	beq	finger_point
-	bne	finger_left
-
-check_left_east:
-	cpy	#DIRECTION_E
-	bne	check_left_west
-handle_left_east:
-	; check if north exists
-	and	#BG_NORTH
-	beq	finger_point
-	bne	finger_left
-
-check_left_west:
-	; we should be only option left
-handle_left_west:
-	; check if south exists
-	and	#BG_SOUTH
-	beq	finger_point
-	bne	finger_left
-
+	cmp	#$1
+	beq	finger_left
+	bne	finger_uturn_left
 
 check_cursor_right:
 
+	jsr	lookup_direction
+
+	and	#$f0
+
+	beq	finger_point
+	cmp	#$10
+	beq	finger_right
+	bne	finger_uturn_right
+
+log2_table:
+	;     0 1 2 3 4 5 6 7 8
+	.byte 0,0,1,1,2,2,2,2,3
+
+lookup_direction:
+	lda	DIRECTION
+	and	#$f
+	tay
+	lda	log2_table,Y
+	asl
+	asl
+	asl
+	asl
+	clc
 	ldy	#LOCATION_BGS
-	lda	(LOCATION_STRUCT_L),Y
+	adc	(LOCATION_STRUCT_L),Y
+	tay
 
-check_right_north:
-	ldy	DIRECTION
-	cpy	#DIRECTION_N
-	bne	check_right_south
+	lda	direction_lookup,Y
 
-handle_right_north:
-	; check if east exists
-	and	#BG_EAST
-	beq	finger_point
-	bne	finger_right
-
-check_right_south:
-	cpy	#DIRECTION_S
-	bne	check_right_east
-
-handle_right_south:
-	; check if west exists
-	and	#BG_WEST
-	beq	finger_point
-	bne	finger_right
-
-check_right_east:
-	cpy	#DIRECTION_E
-	bne	check_right_west
-handle_right_east:
-	; check if south exists
-	and	#BG_SOUTH
-	beq	finger_point
-	bne	finger_right
-
-check_right_west:
-	; we should be only option left
-handle_right_west:
-	; check if north exists
-	and	#BG_NORTH
-	beq	finger_point
-	bne	finger_right
-
-
+	rts
 
 finger_left:
 	lda	#1
@@ -176,7 +187,25 @@ finger_right:
 	lda     #>finger_right_sprite
 	jmp	finger_draw
 
+finger_uturn_left:
 
+	lda	#2
+	sta	IN_LEFT
+
+	lda     #<finger_turn_left_sprite
+	sta	INL
+	lda     #>finger_turn_left_sprite
+	jmp	finger_draw
+
+finger_uturn_right:
+
+	lda	#2
+	sta	IN_RIGHT
+
+	lda     #<finger_turn_right_sprite
+	sta	INL
+	lda     #>finger_turn_right_sprite
+	jmp	finger_draw
 
 finger_draw:
 	sta	INH
@@ -184,4 +213,18 @@ finger_draw:
 
 no_draw_pointer:
 	rts
+
+; 0 = point
+; 1 = left
+; 2 = left u-turn
+; R/L   EWSN    0010
+direction_lookup:
+direction_lookup_n:
+	.byte $00,$00,$22,$22,$01,$01,$21,$21,$10,$10,$12,$12,$11,$11,$11,$11
+direction_lookup_s:
+	.byte $00,$22,$00,$22,$10,$12,$10,$12,$01,$01,$21,$21,$11,$11,$11,$11
+direction_lookup_e:
+	.byte $00,$01,$10,$11,$22,$21,$12,$11,$00,$01,$10,$11,$22,$21,$12,$11
+direction_lookup_w:
+	.byte $00,$10,$01,$11,$00,$10,$01,$11,$22,$12,$21,$11,$22,$12,$21,$11
 

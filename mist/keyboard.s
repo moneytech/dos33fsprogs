@@ -12,6 +12,20 @@ handle_keypress:
 keypress:
 	and	#$7f			; clear high bit
 
+check_load:
+	cmp	#$C			; control-L
+	bne	check_save
+
+	jsr	load_game
+	jmp	done_keypress
+
+check_save:
+	cmp	#$13			; control-S
+	bne	check_left
+
+	jsr	save_game
+	jmp	done_keypress
+
 check_left:
 	cmp	#'A'
 	beq	left_pressed
@@ -71,8 +85,15 @@ not_special_return:
 
 	lda	IN_RIGHT
 	beq	not_right_return
-right_return:
 
+	cmp	#1
+	beq	right_return
+
+right_uturn:
+	jsr	uturn
+	jmp	no_keypress
+
+right_return:
 	jsr	turn_right
 	jmp	no_keypress
 
@@ -80,8 +101,14 @@ not_right_return:
 
 	lda	IN_LEFT
 	beq	not_left_return
-left_return:
 
+	cmp	#1
+	beq	left_return
+left_uturn:
+	jsr	uturn
+	jmp	no_keypress
+
+left_return:
 	jsr	turn_left
 	jmp	no_keypress
 
@@ -120,6 +147,29 @@ change_direction:
 
 	; load background
 	lda	DIRECTION
+	bpl	no_split
+
+	; split text/graphics
+	bit	TEXTGR
+
+	; also change sprite cutoff
+	ldx	#40
+	stx	psc_smc1+1
+	stx	psc_smc2+1
+
+	jmp	done_split
+no_split:
+	bit	FULLGR
+
+	; also change sprite cutoff
+	ldx	#48
+	stx	psc_smc1+1
+	stx	psc_smc2+1
+
+done_split:
+	and	#$f			; mask off special flags
+	tay
+	lda	log2_table,Y
 	asl
 	clc
 	adc	#LOCATION_NORTH_BG
@@ -140,9 +190,12 @@ change_direction:
 	; change location
 	;=============================
 change_location:
+	; reset graphics
+	bit	SET_GR
 
 	; reset pointer to not visible, centered
 	lda	#0
+	sta	ANIMATE_FRAME
 	sta	CURSOR_VISIBLE
 	lda	#20
 	sta	CURSOR_X
@@ -152,9 +205,10 @@ change_location:
 	asl
 	tay
 
-	lda	locations,Y
+	lda	(LOCATIONS_L),Y
 	sta	LOCATION_STRUCT_L
-	lda	locations+1,Y
+	iny
+	lda	(LOCATIONS_L),Y
 	sta	LOCATION_STRUCT_H
 
 	jsr	change_direction
@@ -169,6 +223,9 @@ go_forward:
 	; update new location
 
 	lda	DIRECTION
+	and	#$f
+	tay
+	lda	log2_table,Y
 	clc
 	adc	#LOCATION_NORTH_EXIT
 	tay
@@ -182,6 +239,9 @@ go_forward:
 	; update new direction
 
 	lda	DIRECTION
+	and	#$f
+	tay
+	lda	log2_table,Y
 	clc
 	adc	#LOCATION_NORTH_EXIT_DIR
 	tay
@@ -198,6 +258,7 @@ cant_go_forward:
 turn_left:
 
 	lda	DIRECTION
+	and	#$f
 	cmp	#DIRECTION_N
 	beq	go_west
 	cmp	#DIRECTION_W
@@ -211,6 +272,7 @@ turn_left:
 	;===========================
 turn_right:
 	lda	DIRECTION
+	and	#$f
 	cmp	#DIRECTION_N
 	beq	go_east
 	cmp	#DIRECTION_E
@@ -219,6 +281,20 @@ turn_right:
 	beq	go_west
 	bne	go_north
 
+	;==========================
+	; uturn
+	;===========================
+uturn:
+
+	lda	DIRECTION
+	and	#$f
+	cmp	#DIRECTION_N
+	beq	go_south
+	cmp	#DIRECTION_W
+	beq	go_east
+	cmp	#DIRECTION_S
+	beq	go_north
+	bne	go_west
 
 go_north:
 	lda	#DIRECTION_N

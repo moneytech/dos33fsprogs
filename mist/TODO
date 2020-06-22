@@ -1,69 +1,117 @@
+For release 1.0
++ LOADER 
+	-- better loader
+	-- save/load games
+	-- sound loader
++ MIST (split off ship-up/ship-down?)
+	-- fix catherine letter (bg, grab from other side)
+	-- constellation puzzle/ship raising
+	-- marker switches
++ DENTIST
+	-- all of it
++ CABIN (split off?)
+	-- safe puzzle
+	-- boiler
+	-- up/down in tree
++ OCTAGON
+	-- code book
+	-- ending
++ SELENA
+	-- sounds/door puzzle
+	-- have sub background change
+
++ STONEY
+	-- hook up compass rose
+	-- hook up pump 
+	-- hook up telescope
+	-- hook up key/trunk puzzle
+
++ CHANNEL
+	-- hook up water valves at least
+	-- hook up stairway and elevator1
+
++ ARBOR
+	-- all of it
+
+Done:
++ MECHE
++ MIST_TITLE
++ VIEWER
+
+================================
+
+main:
++ some sort of switch animation on circuit breakers?
++ marker switches
++ ship raise/lower
++ look at catherine's letter from other side of path
++ allow opening/grabbing white page
+
+octagon_room:
++ fireplace book
++ in tower could have extra window open/closed far backgrounds
++ turning when looking at hint loses the text mode
++ final puzzle in fireplace
++ line drawing on map isn't optimal
++ should hints be black on white text?
+
+General:
 + Insert floppy #100 joke?
 + double link noise (once when leave, once when get there?)
-
-+ allow turning around
 + adjust grab window on letter
 + add missing red book step
 
-+ LOADING screen
+dentist office:
++ implement
 
-Make game winnable:
-+ Allow access to all marker switches
-+ Track state of marker switches (draw them properly?)
-+ Allow grabbing white page
-+ allow entering code
+ending:
++ all endings
++ Fireplace: 8x6 grid
 
+MECHE age:
++ can poke around more stuff in their rooms
++ reduce size by using flipped-background attribute
+
+SELENA age:
++ optional mockingboard sound for keyboard?
++ sound
+	5 sound effects (not digital samples)
+	maybe not bother with aiming antennas, but sum button plays
+	if switch been pushed
+	filler sounds for others?
++ That whole rediculous underground sub sequence
++ light switch in tunnel
++ antenna compartment should open/close when you click on it
++ better colors
+
+Channelwood:
++ Implement safe
++ Implement tree
++ Implement boiler
++ Implement water valves
++ Enable linking back to Myst
++ Windmill animation
++ Switch flip animation
++ Open faucet animation
++ Animation for bridge rising
++ Animation for pipe extending
++ Animation for book elevator
++ Animation for level1 elevator
++ Animation for level2 elevator
++ Background soud effects
+
+
+Stoneship age:
++ Implement floating chest puzzle
++ Implement compass rose light puzzle
++ Implement raising/lowering water
++ Implement telescope
++ Implement the half-letter
++ Hook up tunnels into compass room properly
 
 Ending:
 + Turning
 + Allow looking at green book on shelf
 + Atrus at end -- hires?
-
-
-MIST island:
-+ Tunnel to generator
-+ Generator puzzle
-+ Dentist chair
-+ Raise ship
-
-MECHE age:
-+ Linking book animation
-+ Implement
-
-SPACESHIP age:
-+ Keyboard
-+ Linking book
-
-Tree age:
-+ Tree puzzle
-
-Stoneship age:
-+ ?
-
-Move sound to language card (meaning no sound on II+ w/o language card)
-
-
-
-Marker Switches (8):
-+ * Dock
-+ * Gears
-+ * Dentist
-+ * Pool
-+ * Spaceship
-+ * Clock
-+ * Cabin
-+ * Generator
-
-Fireplace:
-+ 8x6 grid
-
-more pictures?
-+ open gear
-+ gear linking book
-+ fireplace close
-+ inside fireplace
-+ fireplace puzzle
-+ bookshelf close?
-+ book?
-+ atrus at end
++ Marker Switches (8):
 

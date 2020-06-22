@@ -4,9 +4,7 @@
 .include "zp.inc"
 .include "hardware.inc"
 
-; the TITLE program sets $05 with which thing to load
-; this part of the program stays resident, so when a level ends
-; it changes $05 (WHICH_LOAD) and this code loads the proper executable
+.include "common_defines.inc"
 
 nibtbl =  $300	; nothing uses the bottom 128 bytes of $300, do they?
 bit2tbl = $380 	; bit2tbl:	.res 86			;	= nibtbl+128
@@ -18,8 +16,7 @@ filbuf  = $3D6  ; filbuf:	.res 4			;	= bit2tbl+86
 ; modified to assembled with ca65 -- vmw
 ; added code to patch it to run from current disk slot -- vmw
 
-
-;	WHICH_LOAD =	$05	; thing to load
+;	WHICH_LOAD =	$7E	; thing to load
 ;	adrlo	=	$26	; constant from boot prom
 ;	adrhi	=	$27	; constant from boot prom
 ;	tmpsec	=	$3c	; constant from boot prom
@@ -52,7 +49,7 @@ filbuf  = $3D6  ; filbuf:	.res 4			;	= bit2tbl+86
 	;===================================================
 
 loader_start:
-	lda	#0
+	lda	#LOAD_TITLE
 	sta	WHICH_LOAD
 
 	jsr	init	; unhook DOS, init nibble table
@@ -85,9 +82,9 @@ load_intro:
 	jmp	actual_load
 
 load_other:
-	lda	#<$1400
+	lda	#<$2000
 	sta	entry_smc+1
-	lda	#>$1400
+	lda	#>$2000
 	sta	entry_smc+2
 
 actual_load:
@@ -97,6 +94,21 @@ actual_load:
 	; SET UP DOS3.3 FILENAME
 	;===================================================
 	;===================================================
+
+load_file_and_execute:
+
+	jsr	opendir_filename
+
+entry_smc:
+	jsr	$1000		; jump to common entry point
+
+	; hope they updated the WHICH_LOAD value
+
+	jmp	which_load_loop
+
+
+	;==============================
+	; setup filename then open/load
 
 opendir_filename:
 
@@ -126,18 +138,13 @@ copy_filename_loop:
 copy_filename_done:
 	jsr	opendir		; open and read entire file into memory
 
-entry_smc:
-	jsr	$1000		; jump to common entry point
-
-	; hope they updated the WHICH_LOAD value
-
-	jmp	which_load_loop
-
+	rts
 
 filenames:
 	.word intro_filename
-	.word mist_filename,meche_filename
-	.word ending_filename
+	.word mist_filename,meche_filename,selena_filename,octagon_filename
+	.word viewer_filename,stoney_filename,channel_filename,cabin_filename
+	.word dentist_filename,arbor_filename,shipup_filename,ending_filename
 
 intro_filename:
 	.byte "MIST_TITLE",0
@@ -145,6 +152,24 @@ mist_filename:
 	.byte "MIST",0
 meche_filename:
 	.byte "MECHE",0
+selena_filename:
+	.byte "SELENA",0
+octagon_filename:
+	.byte "OCTAGON",0
+viewer_filename:
+	.byte "VIEWER",0
+stoney_filename:
+	.byte "STONEY",0
+channel_filename:
+	.byte "CHANNEL",0
+cabin_filename:
+	.byte "CABIN",0
+dentist_filename:
+	.byte "DENTIST",0
+arbor_filename:
+	.byte "ARBOR",0
+shipup_filename:
+	.byte "SHIPUP",0
 ending_filename:
 	.byte "ENDING",0
 
@@ -687,6 +712,25 @@ sectbl:	.byte $00,$0d,$0b,$09,$07,$05,$03,$01,$0e,$0c,$0a,$08,$06,$04,$02,$0f
 ;filbuf:		.res 4			;	= bit2tbl+86
 					;dataend         = filbuf+4
 
+
+
+
+        .include        "audio.s"
+        .include        "decompress_fast_v2.s"
+        .include        "draw_pointer.s"
+        .include        "end_level.s"
+	.include        "gr_copy.s"
+        .include        "gr_fast_clear.s"
+        .include        "gr_offsets.s"
+        .include        "gr_pageflip.s"
+        .include        "gr_putsprite_crop.s"
+        .include        "keyboard.s"
+        .include        "text_print.s"
+	.include	"loadstore.s"
+
+	.include        "common_sprites.inc"
+        .include        "page_sprites.inc"
+
 loader_end:
 
-.assert (<loader_end - <loader_start)>3, error, "loader too big"
+.assert (<loader_end - <loader_start)>16, error, "loader too big"

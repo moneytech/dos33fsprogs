@@ -353,6 +353,7 @@ getlargesrc:
 					; fall through grab high 8 bits
 
 getsrc:
+getsrc_smc:
 LZSA_SRC_LO = *+1
 LZSA_SRC_HI = *+2
 	lda	$AAAA
