@@ -6,36 +6,45 @@ PNG_TO_40x48D = ../gr-utils/png_to_40x48d
 PNG2RLE = ../gr-utils/png2rle
 B2D = ../bmp2dhr/b2d
 
-all:	mist.dsk mist_side2.dsk
+all:	mist.dsk mist_side2.dsk mist_side3.dsk
 
-zip:	mist.dsk mist_side2.dsk
-	zip mist.zip mist.dsk mist_side2.dsk
+zip:	mist.dsk mist_side2.dsk mist_side3.dsk
+	zip mist.zip mist.dsk mist_side2.dsk mist_side3.dsk
 
 mist.dsk:	HELLO LOADER MIST_TITLE MIST OCTAGON VIEWER \
-		MECHE SELENA CABIN CHANNEL STONEY SAVE0
+		DENTIST D\'NI SAVE0 SHIP
 	cp empty.dsk mist.dsk
 	$(DOS33) -y mist.dsk SAVE A HELLO
 	$(DOS33) -y mist.dsk BSAVE -a 0x1000 LOADER
 	$(DOS33) -y mist.dsk BSAVE -a 0x4000 MIST_TITLE
 	$(DOS33) -y mist.dsk BSAVE -a 0x2000 MIST
 	$(DOS33) -y mist.dsk BSAVE -a 0x2000 OCTAGON
-#	$(DOS33) -y mist.dsk BSAVE -a 0x2000 MECHE
-#	$(DOS33) -y mist.dsk BSAVE -a 0x2000 SELENA
-	$(DOS33) -y mist.dsk BSAVE -a 0x2000 CABIN
-#	$(DOS33) -y mist.dsk BSAVE -a 0x2000 VIEWER
-	$(DOS33) -y mist.dsk BSAVE -a 0x2000 STONEY
+	$(DOS33) -y mist.dsk BSAVE -a 0x2000 VIEWER
+	$(DOS33) -y mist.dsk BSAVE -a 0x2000 DENTIST
+	$(DOS33) -y mist.dsk BSAVE -a 0x2000 D\'NI
 	$(DOS33) -y mist.dsk BSAVE -a 0xe00 SAVE0
-	$(DOS33) -y mist.dsk BSAVE -a 0x9000 ./audio/link_noise.btc LINK_NOISE.BTC
+	$(DOS33) -y mist.dsk BSAVE -a 0x2000 SHIP
+#	$(DOS33) -y mist.dsk BSAVE -a 0x9000 ./audio/link_noise.btc LINK_NOISE.BTC
 
-mist_side2.dsk:	HELLO_DISK2 MECHE SELENA CHANNEL VIEWER ARBOR
+mist_side2.dsk:	HELLO_DISK2 CHANNEL ARBOR NIBEL CABIN
 	cp empty.dsk mist_side2.dsk
 	$(DOS33) -y mist_side2.dsk SAVE A HELLO_DISK2 HELLO
-	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 MECHE
-	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 SELENA
 	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 CHANNEL
 	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 ARBOR
-	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 VIEWER
-#	$(DOS33) -y mist_side2.dsk BSAVE -a 0x9000 ./audio/link_noise.btc LINK_NOISE.BTC
+	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 NIBEL
+	$(DOS33) -y mist_side2.dsk BSAVE -a 0x2000 CABIN
+
+
+
+mist_side3.dsk:	HELLO_DISK2 MECHE SELENA STONEY GENERATOR SUB
+	cp empty.dsk mist_side3.dsk
+	$(DOS33) -y mist_side3.dsk SAVE A HELLO_DISK2 HELLO
+	$(DOS33) -y mist_side3.dsk BSAVE -a 0x2000 MECHE
+	$(DOS33) -y mist_side3.dsk BSAVE -a 0x2000 SELENA
+	$(DOS33) -y mist_side3.dsk BSAVE -a 0x2000 STONEY
+	$(DOS33) -y mist_side3.dsk BSAVE -a 0x2000 GENERATOR
+	$(DOS33) -y mist_side3.dsk BSAVE -a 0x2000 SUB
+
 
 ###
 
@@ -45,7 +54,8 @@ LOADER: loader.o
 loader.o:	loader.s \
 	gr_copy.s gr_offsets.s gr_pageflip.s gr_putsprite_crop.s \
 	text_print.s gr_fast_clear.s decompress_fast_v2.s \
-	keyboard.s draw_pointer.s end_level.s audio.s loadstore.s
+	keyboard.s draw_pointer.s end_level.s audio.s loadstore.s \
+	qkumba_popwr.s
 	ca65 -o loader.o loader.s -l loader.lst
 
 ###
@@ -53,7 +63,7 @@ loader.o:	loader.s \
 SAVE0: default_save.o
 	ld65 -o SAVE0 default_save.o -C ../linker_scripts/apple2_e00.inc
 
-default_save.o:	default_save.s
+default_save.o:	default_save.s playthrough_save.inc
 	ca65 -o default_save.o default_save.s -l default_save.lst
 
 
@@ -74,6 +84,7 @@ generate_common.o:	generate_common.c
 	$(CC) $(CFLAGS) -c generate_common.c
 
 ####
+
 common_routines.inc:	loader.lst generate_common
 	./generate_common > common_routines.inc
 
@@ -84,12 +95,14 @@ MIST_TITLE:	mist_title.o
 
 mist_title.o:	mist_title.s zp.inc hardware.inc common_defines.inc \
 	common_routines.inc \
-	graphics_title/mist_title.lzsa graphics_title/title_graphics.inc \
+	graphics_title_hgr/mist_title.lzsa graphics_title/title_graphics.inc \
 	gr_copy.s gr_offsets.s gr_pageflip.s gr_putsprite_crop.s \
 	text_print.s gr_fast_clear.s decompress_fast_v2.s \
 	keyboard.s draw_pointer.s end_level.s audio.s \
 	init_state.s \
-	link_book_mist_dock.s common_sprites.inc leveldata_title.inc
+	link_book_mist_dock.s common_sprites.inc leveldata_title.inc \
+	pt3_lib_core.s pt3_lib_init.s pt3_lib_mockingboard_detect.s \
+	pt3_lib_mockingboard_setup.s pt3_lib_irq_handler.s interrupt_handler.s
 	ca65 -o mist_title.o mist_title.s -l mist_title.lst
 
 ####
@@ -102,14 +115,26 @@ mist.o:	mist.s zp.inc hardware.inc common_defines.inc common_routines.inc \
 	common_sprites.inc \
 	leveldata_mist.inc \
 	clock_bridge_puzzle.s clock_sprites.inc \
-	letter_cat.s \
 	marker_switch.s \
 	keyboard.s \
 	draw_pointer.s \
 	end_level.s \
-	generator_puzzle.s \
-	gr_copy.s audio.s text_print.s decompress_fast_v2.s
+	mist_puzzles.s \
+	handle_pages.s
 	ca65 -o mist.o mist.s -l mist.lst
+
+####
+
+GENERATOR:	generator.o
+	ld65 -o GENERATOR generator.o -C ../linker_scripts/apple2_2000.inc
+
+generator.o:	generator.s zp.inc hardware.inc \
+	common_defines.inc common_routines.inc \
+	graphics_generator/generator_graphics.inc \
+	leveldata_generator.inc \
+	generator_puzzle.s
+	ca65 -o generator.o generator.s -l generator.lst
+
 
 ####
 
@@ -122,17 +147,25 @@ octagon.o:	octagon.s zp.inc hardware.inc common_defines.inc \
 	books/octagon_books.inc \
 	common_sprites.inc page_sprites.inc \
 	leveldata_octagon.inc \
-	letter_cat.s \
-	marker_switch.s \
 	brother_books.s \
-	keyboard.s \
-	draw_pointer.s \
-	end_level.s \
 	handle_pages.s \
 	octagon_bookshelf.s \
 	octagon_rotation.s \
-	gr_copy.s audio.s text_print.s decompress_fast_v2.s
+	octagon_fireplace.s
 	ca65 -o octagon.o octagon.s -l octagon.lst
+
+####
+
+D\'NI:	dni.o
+	ld65 -o D\'NI dni.o -C ../linker_scripts/apple2_2000.inc
+
+dni.o:	dni.s zp.inc hardware.inc common_defines.inc \
+	common_routines.inc \
+	graphics_dni/dni_graphics.inc \
+	leveldata_dni.inc \
+	dni_ending.s
+	ca65 -o dni.o dni.s -l dni.lst
+
 
 
 ####
@@ -170,10 +203,26 @@ selena.o:	selena.s zp.inc hardware.inc common_defines.inc \
 	keyboard.s \
 	draw_pointer.s \
 	speaker_beeps.s \
-	organ_puzzle.s \
+	selena_organ_puzzle.s selena_sound_puzzle.s \
 	gr_copy.s audio.s text_print.s decompress_fast_v2.s
 	ca65 -o selena.o selena.s -l selena.lst
 
+####
+
+SUB:	sub.o
+	ld65 -o SUB sub.o -C ../linker_scripts/apple2_2000.inc
+
+sub.o:	sub.s zp.inc hardware.inc common_defines.inc \
+	common_routines.inc \
+	graphics_sub/sub_graphics.inc \
+	common_sprites.inc \
+	leveldata_sub.inc \
+	link_book_mist.s \
+	end_level.s \
+	keyboard.s \
+	draw_pointer.s \
+	gr_copy.s audio.s text_print.s decompress_fast_v2.s
+	ca65 -o sub.o sub.s -l sub.lst
 
 ####
 
@@ -185,6 +234,7 @@ viewer.o:	viewer.s zp.inc hardware.inc common_defines.inc \
 	common_routines.inc \
 	common_sprites.inc \
 	page_sprites.inc \
+	number_sprites.inc \
 	leveldata_viewer.inc \
 	viewer_controls.s \
 	keyboard.s \
@@ -208,9 +258,27 @@ stoney.o:	stoney.s zp.inc hardware.inc common_defines.inc \
 	link_book_stoney.s \
 	link_book_mist.s \
 	handle_pages.s \
-	gr_copy.s audio.s text_print.s decompress_fast_v2.s
+	stoney_puzzles.s
 	ca65 -o stoney.o stoney.s -l stoney.lst
 
+####
+
+SHIP:	ship.o
+	ld65 -o SHIP ship.o -C ../linker_scripts/apple2_2000.inc
+
+ship.o:	ship.s zp.inc hardware.inc common_defines.inc \
+	graphics_ship/ship_graphics.inc \
+	common_routines.inc \
+	common_sprites.inc \
+	page_sprites.inc \
+	leveldata_ship.inc \
+	keyboard.s \
+	draw_pointer.s \
+	link_book_stoney.s \
+	link_book_mist.s \
+	handle_pages.s \
+	gr_copy.s audio.s text_print.s decompress_fast_v2.s
+	ca65 -o ship.o ship.s -l ship.lst
 
 ####
 
@@ -226,7 +294,9 @@ cabin.o:	cabin.s zp.inc hardware.inc common_defines.inc \
 	keyboard.s \
 	draw_pointer.s \
 	link_book_channel.s \
-	gr_copy.s audio.s text_print.s decompress_fast_v2.s
+	marker_switch.s \
+	cabin_boiler_puzzle.s \
+	number_sprites.inc
 	ca65 -o cabin.o cabin.s -l cabin.lst
 
 
@@ -260,16 +330,107 @@ arbor.o:	arbor.s zp.inc hardware.inc common_defines.inc \
 	leveldata_arbor.inc \
 	arbor_switches.s
 	ca65 -o arbor.o arbor.s -l arbor.lst
+
 ####
 
-graphics_island/mist_graphics.inc:
-	cd graphics_island && make
+NIBEL:	nibel.o
+	ld65 -o NIBEL nibel.o -C ../linker_scripts/apple2_2000.inc
+
+nibel.o:	nibel.s zp.inc hardware.inc common_defines.inc \
+	common_routines.inc \
+	graphics_nibel/nibel_graphics.inc \
+	leveldata_nibel.inc \
+	handle_pages.s nibel_switches.s
+	ca65 -o nibel.o nibel.s -l nibel.lst
+
+####
+
+DENTIST:	dentist.o
+	ld65 -o DENTIST dentist.o -C ../linker_scripts/apple2_2000.inc
+
+dentist.o:	dentist.s zp.inc hardware.inc common_defines.inc \
+	common_routines.inc \
+	graphics_dentist/dentist_graphics.inc \
+	leveldata_dentist.inc \
+	dentist_panel.s \
+	marker_switch.s
+	ca65 -o dentist.o dentist.s -l dentist.lst
+
+
+####
+
+graphics_title/title_graphics.inc:
+	cd graphics_title && make
+
+graphics_mist/mist_graphics.inc:
+	cd graphics_mist && make
+
+graphics_octagon/octagon_graphics.inc:
+	cd graphics_octagon && make
+
+books/octagon_books.inc:
+	cd books && make
+
+graphics_viewer/viewer_graphics.inc:
+	cd graphics_viewer && make
+
+graphics_meche/meche_graphics.inc:
+	cd graphics_meche && make
+
+graphics_selena/selena_graphics.inc:
+	cd graphics_selena && make
+
+graphics_cabin/cabin_graphics.inc:
+	cd graphics_cabin && make
+
+graphics_channel/channel_graphics.inc:
+	cd graphics_channel && make
+
+graphics_stoney/stoney_graphics.inc:
+	cd graphics_stoney && make
+
+graphics_dentist/dentist_graphics.inc:
+	cd graphics_dentist && make
+
+graphics_generator/generator_graphics.inc:
+	cd graphics_generator && make
+
+graphics_arbor/arbor_graphics.inc:
+	cd graphics_arbor && make
+
+graphics_nibel/nibel_graphics.inc:
+	cd graphics_nibel && make
+
+graphics_dni/dni_graphics.inc:
+	cd graphics_dni && make
+
+graphics_ship/ship_graphics.inc:
+	cd graphics_ship && make
 
 
 ####
 
 clean:		
-		rm -f *~ *.o *.lst HELLO HELLO_DISK2 \
+	rm -f *~ *.o *.lst HELLO HELLO_DISK2 \
 			LOADER MIST_TITLE \
-			MIST OCTAGON \
-			MECHE SELENA STONEY CHANNEL ARBOR
+			MIST OCTAGON VIEWER DENTIST \
+			MECHE SELENA SHIP STONEY CHANNEL ARBOR NIBEL \
+			GENERATOR \
+			generate_common
+	cd graphics_title && make clean
+	cd graphics_mist && make clean
+	cd graphics_octagon && make clean
+	cd books && make clean
+	cd graphics_viewer && make clean
+	cd graphics_meche && make clean
+	cd graphics_selena && make clean
+	cd graphics_cabin && make clean
+	cd graphics_channel && make clean
+	cd graphics_stoney && make clean
+	cd graphics_dentist && make clean
+	cd graphics_generator && make clean
+	cd graphics_arbor && make clean
+	cd graphics_nibel && make clean
+	cd graphics_dni && make clean
+	cd graphics_ship && make clean
+

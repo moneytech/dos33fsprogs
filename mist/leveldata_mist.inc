@@ -14,7 +14,6 @@ locations:
 	.word location28,location29,location30,location31
 	.word location32,location33,location34,location35
 	.word location36,location37,location38,location39
-	.word location40
 
 ; MIST_ARRIVAL_DOCK	-- dock
 location0:
@@ -54,8 +53,8 @@ location1:
 	.byte	BG_NORTH|BG_SOUTH
 	.byte	DIRECTION_N	; special exit
 	.byte	23,30		; special x
-	.byte	25,32		; special y
-	.word	click_switch-1	; special function
+	.byte	25,44		; special y
+	.word	click_switch_dock-1	; special function
 
 ; MIST_DOCK_STEPS	-- dock steps
 location2:
@@ -73,8 +72,6 @@ location2:
 	.word	dock_steps_w_lzsa		; west bg
 	.byte	BG_WEST|BG_NORTH
 	.byte	$ff		; special exit
-
-
 
 ; MIST_ABOVE_DOCK	-- above dock path
 location3:
@@ -143,18 +140,17 @@ location6:
 	.word	step_land2_w_lzsa	; west bg
 	.byte	BG_WEST	| BG_EAST
 	.byte	DIRECTION_W	; special exit (letter)
-	.byte	29,32		; special x
-	.byte	38,45		; special y
+	.byte	27,32		; special x
+	.byte	36,45		; special y
 	.word	read_letter-1
-
 
 ; MIST_STEPS_DENTIST		-- steps outside dentist chair branch
 location7:
-	.byte	MIST_DENTIST_DOOR		; north exit
+	.byte	$ff				; north exit
 	.byte	$ff				; south exit
 	.byte	MIST_STEPS_2ND_LANDING		; east exit
-	.byte	8				; west exit
-	.byte	DIRECTION_N	; north exit_dir
+	.byte	MIST_STEPS_4TH_LANDING		; west exit
+	.byte	$ff		; north exit_dir
 	.byte	$ff		; south exit_dir
 	.byte	DIRECTION_E	; east exit_dir
 	.byte	DIRECTION_W	; west exit_dir
@@ -163,7 +159,11 @@ location7:
 	.word	step_dentist_e_lzsa	; east bg
 	.word	step_dentist_w_lzsa	; west bg
 	.byte	BG_EAST|BG_WEST|BG_NORTH
-	.byte	$ff		; special exit
+	.byte	DIRECTION_N	; special exit
+	.byte	10,30		; special x
+	.byte	0,46		; special y
+	.word	goto_dentist-1
+
 
 ; MIST_STEPS_4TH_LANDING	-- steps one more time up
 location8:
@@ -180,7 +180,10 @@ location8:
 	.word	step_land3_e_lzsa	; east bg
 	.word	step_land3_w_lzsa	; west bg
 	.byte	BG_WEST	| BG_EAST	; west and eastl
-	.byte	$ff		; special exit
+	.byte	DIRECTION_E	; special exit
+	.byte	0,16		; special x
+	.byte	0,32		; special y
+	.word	goto_dentist_steps-1
 
 ; MIST_OUTSIDE_TEMPLE		-- at the top outside temple
 location9:
@@ -202,39 +205,41 @@ location9:
 	.byte	0,46		; special y
 	.word	enter_octagon-1
 
-
 ; MIST_POOL			-- pool
 location10:
-	.byte	$ff			; north exit
-	.byte	MIST_TREE_CORRIDOR_4	; south exit
+	.byte	MIST_OUTSIDE_TEMPLE	; north exit
+	.byte	MIST_TREE_CORRIDOR_1	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
+	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	$0000		; north bg
+	.word	pool_n_lzsa	; north bg
 	.word	pool_s_lzsa	; south bg
-	.word	$0000		; east bg
-	.word	$0000		; west bg
-	.byte	BG_SOUTH
-	.byte	$ff		; special exit
+	.word	pool_e_lzsa	; east bg
+	.word	pool_w_lzsa	; west bg
+	.byte	BG_NORTH|BG_SOUTH|BG_EAST|BG_WEST
+	.byte	DIRECTION_E|DIRECTION_W		; special exit
+	.byte	2,38		; special x
+	.byte	10,32		; special y
+	.word	pool_pillars-1
 
 ; MIST_CLOCK			-- clock
 location11:
-	.byte	$ff			; north exit
+	.byte	MIST_TREE_CORRIDOR_5	; north exit
 	.byte	MIST_CLOCK_PUZZLE	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
+	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	$0000		; north bg
+	.word	clock_n_lzsa	; north bg
 	.word	clock_s_lzsa	; south bg
 	.word	clock_e_lzsa	; east bg
 	.word	$0000		; west bg
-	.byte	BG_SOUTH|BG_EAST
+	.byte	BG_SOUTH|BG_EAST|BG_NORTH
 	.byte	DIRECTION_E	; special exit
 	.byte	5,30		; special x
 	.byte	2,46		; special y
@@ -259,23 +264,24 @@ location12:
 
 ; MIST_TREE_CORRIDOR_2		-- tree corridor #2
 location13:
-	.byte	MIST_OUTSIDE_TEMPLE	; north exit
-	.byte	$ff			; south exit
+	.byte	MIST_TREE_CORRIDOR_1	; north exit
+	.byte	MIST_TREE_CORRIDOR_4	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N|DIRECTION_ONLY_POINT	; north exit_dir
-	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
 	.word	tree2_n_lzsa	; north bg
-	.word	$0000		; south bg
-	.word	$0000		; east bg
-	.word	$0000		; west bg
-	.byte	BG_NORTH
-	.byte	DIRECTION_N	; special exit
-	.byte	25,31		; special x
-	.byte	19,23		; special y
-	.word	click_switch-1	; special function
+	.word	tree2_s_lzsa	; south bg
+	.word	tree2_e_lzsa	; east bg
+	.word	tree2_w_lzsa	; west bg
+	.byte	BG_NORTH|BG_SOUTH|BG_EAST|BG_WEST
+	.byte	DIRECTION_E|DIRECTION_W|DIRECTION_N
+	.byte	6,33		; special x
+	.byte	10,38		; special y
+	.word	tree2_pillars-1
+
 
 ; MIST_TREE_CORRIDOR_5		-- tree corridor #5
 location14:
@@ -313,10 +319,9 @@ location15:
 	.word	gear_w_lzsa	; west bg
 	.byte	BG_NORTH | BG_SOUTH | BG_WEST
 	.byte	DIRECTION_N	; special exit
-	.byte	5,10		; special x
-	.byte	29,35		; special y
-	.word	click_switch-1	; special function
-
+	.byte	4,10		; special x
+	.byte	28,35		; special y
+	.word	click_switch_gear-1	; special function
 
 ; MIST_GEAR_BASE		-- gear base
 location16:
@@ -335,46 +340,49 @@ location16:
 	.byte	BG_NORTH | BG_EAST
 	.byte	$ff		; special exit
 
-; MIST_DENTIST_DOOR		-- dentist door
+; MIST_CAT_LETTER	-- catherine letter
 location17:
-	.byte	MIST_CHAIR_VIEW		; north exit
-	.byte	MIST_STEPS_4TH_LANDING	; south exit
+	.byte	MIST_STEPS_2ND_LANDING	; north exit
+	.byte	$ff			; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	DIRECTION_N	; north exit_dir
-	.byte	DIRECTION_W	; south exit_dir
+	.byte	DIRECTION_W	; north exit_dir
+	.byte	$ff		; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	dentist_door_n_lzsa	; north bg
-	.word	dentist_door_s_lzsa	; south bg
+	.word	cat_letter_lzsa		; north bg
+	.word	$0000			; south bg
 	.word	$0000			; east bg
 	.word	$0000			; west bg
-	.byte	BG_NORTH | BG_SOUTH
+	.byte	BG_NORTH
 	.byte	$ff		; special exit
 
 ; MIST_SPACESHIP_SWITCH		-- spaceship switch
 location18:
 	.byte	MIST_ROCKET_CLOSE	; north exit
-	.byte	$ff			; south exit
+	.byte	MIST_SPACESHIP_FAR	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
-	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	spaceship_switch_n_lzsa	; north bg
-	.word	$0000		; south bg
-	.word	$0000		; east bg
-	.word	$0000		; west bg
-	.byte	BG_NORTH
-	.byte	$ff		; special exit
+	.word	spaceship_switch_n_lzsa		; north bg
+	.word	spaceship_switch_s_lzsa		; south bg
+	.word	$0000				; east bg
+	.word	$0000				; west bg
+	.byte	BG_NORTH|BG_SOUTH
+	.byte	DIRECTION_N	; special exit
+	.byte	22,27		; special x
+	.byte	20,28		; special y
+	.word	click_switch_spaceship-1	; special function
 
 ; MIST_TREE_CORRIDOR_4		-- tree corridor4 (with generator switch)
 location19:
 	.byte	MIST_TREE_CORRIDOR_2	; north exit
 	.byte	MIST_TREE_CORRIDOR_5	; south exit
 	.byte	$ff			; east exit
-	.byte	MIST_TOWER1_TRAIL	; west exit
+	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
@@ -385,30 +393,30 @@ location19:
 	.word	tree4_w_lzsa	; west bg
 	.byte	BG_NORTH|BG_SOUTH|BG_WEST|BG_EAST
 	.byte	DIRECTION_W	; special exit
-	.byte	6,28		; special x
+	.byte	6,34		; special x
 	.byte	0,46		; special y
-	.word	green_house-1	; special function
+	.word	go_to_generator-1	; special function
 
-; UNUSED (was MIST_TREE_CABIN)
+; MIST_TREE_CORRIDOR_1
 location20:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	MIST_TREE_CORRIDOR_5	; east exit
+	.byte	MIST_POOL		; north exit
+	.byte	MIST_TREE_CORRIDOR_2	; south exit
+	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_E	; east exit_dir
+	.byte	DIRECTION_N	; north exit_dir
+	.byte	DIRECTION_S	; south exit_dir
+	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	$0000			; north bg
-	.word	$0000			; south bg
+	.word	tree1_n_lzsa		; north bg
+	.word	tree1_s_lzsa		; south bg
 	.word	$0000			; east bg
 	.word	$0000			; west bg
-	.byte	BG_EAST
+	.byte	BG_NORTH|BG_SOUTH
 	.byte	$ff		; special exit
 
 ; MIST_CLOCK_PUZZLE		-- clock puzzle
 location21:
-	.byte	MIST_TREE_CORRIDOR_4	; north exit
+	.byte	MIST_TREE_CORRIDOR_5	; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
@@ -416,7 +424,7 @@ location21:
 	.byte	$ff		; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	tree5_n_lzsa		; north bg
+	.word	clock_n_lzsa		; north bg
 	.word	clock_puzzle_s_lzsa	; south bg
 	.word	$0000			; east bg
 	.word	$0000			; west bg
@@ -428,7 +436,7 @@ location21:
 
 ; MIST_CLOCK_ISLAND		-- clock island
 location22:
-	.byte	MIST_TREE_CORRIDOR_5	; north exit
+	.byte	MIST_CLOCK		; north exit
 	.byte	MIST_CLOCK_INSIDE	; south exit
 	.byte	$ff		; east exit
 	.byte	$ff		; west exit
@@ -441,28 +449,31 @@ location22:
 	.word	$0000			; east bg
 	.word	$0000			; west bg
 	.byte	BG_SOUTH|BG_NORTH
-	.byte	$ff		; special exit
+	.byte	DIRECTION_S	; special exit
+	.byte	3,9		; special x
+	.byte	26,36		; special y
+	.word	click_switch_clock-1	; special function
+
 
 ; MYST_CLOCK_INSIDE		-- clock inside
 location23:
-	.byte	$ff			; north exit
-	.byte	MIST_CLOCK_ISLAND	; south exit
+	.byte	MIST_CLOCK_ISLAND	; north exit
+	.byte	$ff			; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	DIRECTION_N	; south exit_dir
+	.byte	DIRECTION_N	; north exit_dir
+	.byte	$ff		; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	$0000			; north bg
+	.word	clock_inside_n_lzsa	; north bg
 	.word	clock_inside_s_lzsa	; south bg
 	.word	$0000			; east bg
 	.word	$0000			; west bg
-	.byte	BG_SOUTH
+	.byte	BG_SOUTH|BG_NORTH
 	.byte	DIRECTION_S	; special exit
 	.byte	12,30		; special x
 	.byte	8,32		; special y
 	.word	clock_inside_puzzle-1	; special function
-
 
 ; MIST_OPEN_GEAR		-- open_gear (?)
 location24:
@@ -484,122 +495,13 @@ location24:
 	.byte	14,24		; special y
 	.word	go_to_meche-1	; special function
 
-; MIST_CHAIR_VIEW		-- chair view
-location25:
-	.byte	MIST_CHAIR_VIEW		; north exit
-	.byte	MIST_DENTIST_DOOR	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_S	; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	chair_view_n_lzsa	; north bg
-	.word	chair_view_s_lzsa	; south bg
-	.word	gear_open_e_lzsa	; east bg
-	.word	$0000			; west bg
-	.byte	BG_NORTH | BG_SOUTH
-	.byte	$ff		; TODO: lightswitch
-
-; MIST_GREEN_SHACK
-location26:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	MIST_TREE_CORRIDOR_4	; east exit
-	.byte	MIST_GREEN_STEPS1	; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_E	; east exit_dir
-	.byte	DIRECTION_N	; west exit_dir
-	.word	$0000			; north bg
-	.word	$0000			; south bg
-	.word	green_house_e_lzsa	; east bg
-	.word	green_house_w_lzsa	; west bg
-	.byte	BG_EAST | BG_WEST
-	.byte	$ff
-
-; MIST_GREEN_STEPS1		-- green shack steps 1
-location27:
-	.byte	MIST_GREEN_STEPS6	; north exit
-	.byte	MIST_GREEN_SHACK	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_N	; north exit_dir
-	.byte	DIRECTION_E	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff			; west exit_dir
-	.word	green_steps1_n_lzsa	; north bg
-	.word	green_steps1_s_lzsa	; south bg
-	.word	$0000			; east bg
-	.word	$0000			; west bg
-	.byte	BG_NORTH | BG_SOUTH
-	.byte	$ff
-
-; MIST_GREEN_STEPS6		-- green shack steps 6
-location28:
-	.byte	MIST_GENERATOR_DOOR	; north exit
-	.byte	$ff			; south exit
-	.byte	$ff			; east exit
-	.byte	MIST_GREEN_STEPS1	; west exit
-	.byte	DIRECTION_N	; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	DIRECTION_S	; west exit_dir
-	.word	green_steps6_n_lzsa	; north bg
-	.word	$0000			; south bg
-	.word	$0000			; east bg
-	.word	green_steps6_w_lzsa	; west bg
-	.byte	BG_NORTH | BG_WEST
-	.byte	$ff
-
-; MIST_GENERATOR_DOOR		-- generator room door
-location29:
-	.byte	MIST_GENERATOR_DOOR	; north exit
-	.byte	MIST_GREEN_STEPS6	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_S	; north exit_dir
-	.byte	DIRECTION_W	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	gen_door_closed_n_lzsa	; north bg
-	.word	gen_door_s_lzsa		; south bg
-	.word	$0000			; east bg
-	.word	$0000			; west bg
-	.byte	BG_NORTH | BG_SOUTH
-	.byte	DIRECTION_N	; special exit
-	.byte	27,32		; special x
-	.byte	26,32		; special y
-	.word	open_gen_door-1	; special function
-
-
-; MIST_GENERATOR_ROOM		-- generator room
-location30:
-	.byte	$ff			; north exit
-	.byte	MIST_GENERATOR_DOOR	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	generator_n_lzsa	; north bg
-	.word	generator_s_lzsa	; south bg
-	.word	$0000			; east bg
-	.word	$0000			; west bg
-	.byte	BG_NORTH | BG_SOUTH
-	.byte	DIRECTION_N
-	.byte	24,36		; special x
-	.byte	34,40		; special y
-	.word	generator_button_press-1	; special function
-
 ; MIST_ROCKET_PATH_PAD		-- pad on way to rocket
-location31:
-	.byte	MIST_SPACESHIP_FAR	; north exit
+location25:
+	.byte	MIST_SPACESHIP_PATH	; north exit
 	.byte	$ff			; south exit
 	.byte	MIST_OUTSIDE_TEMPLE	; east exit
 	.byte	$ff			; west exit
-	.byte	DIRECTION_N	; north exit_dir
+	.byte	DIRECTION_W	; north exit_dir
 	.byte	$ff		; south exit_dir
 	.byte	DIRECTION_E	; east exit_dir
 	.byte	$ff		; west exit_dir
@@ -614,12 +516,12 @@ location31:
 	.word	pad_special-1	; special function
 
 ; MIST_ROCKET_CLOSE		-- rocket close in
-location32:
-	.byte	MIST_SPACESHIP_FAR	; north exit
+location26:
+	.byte	MIST_SPACESHIP_SWITCH	; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	DIRECTION_E	; north exit_dir
+	.byte	DIRECTION_N	; north exit_dir
 	.byte	$ff		; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
@@ -633,9 +535,8 @@ location32:
 	.byte	8,46		; special y
 	.word	open_ss_door-1	; special function
 
-
 ; MIST_TOWER2_PATH		-- tower2 path
-location33:
+location27:
 	.byte	MIST_TOWER2_BASE	; north exit
 	.byte	$ff			; south exit
 	.byte	MIST_ROCKET_PATH_PAD	; east exit
@@ -652,7 +553,7 @@ location33:
 	.byte	$ff
 
 ; MIST_TOWER2_BASE		-- tower2 base
-location34:
+location28:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
@@ -672,7 +573,7 @@ location34:
 	.word	leave_tower2-1	; special function
 
 ; MIST_TOWER2_TOP		-- tower2 top
-location35:
+location29:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
@@ -691,83 +592,8 @@ location35:
 	.byte	10,18		; special y
 	.word	circuit_breaker-1	; special function
 
-; MIST_TOWER1_TRAIL		-- tower1 trail
-location36:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	MIST_TREE_CORRIDOR_4	; east exit
-	.byte	MIST_TOWER1_TRAIL2	; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_E	; east exit_dir
-	.byte	DIRECTION_N	; west exit_dir
-	.word	$0000			; north bg
-	.word	$0000			; south bg
-	.word	tower1_trail_e_lzsa	; east bg
-	.word	tower1_trail_w_lzsa	; west bg
-	.byte	BG_WEST|BG_EAST
-	.byte	$ff
-
-; MIST_TOWER1_TRAIL2		-- tower1 trail2
-location37:
-	.byte	MIST_TOWER1_BOTTOM	; north exit
-	.byte	MIST_TOWER1_TRAIL	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_E|DIRECTION_ONLY_POINT	; north exit_dir
-	.byte	DIRECTION_E	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	tower1_trail2_n_lzsa	; north bg
-	.word	tower1_trail2_s_lzsa	; south bg
-	.word	$0000			; east bg
-	.word	tower1_trail2_w_lzsa	; west bg
-	.byte	BG_NORTH|BG_SOUTH|BG_WEST
-	.byte	$ff
-
-; MIST_TOWER1_BOTTOM		-- tower1 bottom
-location38:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	MIST_TOWER1_TRAIL2	; east exit
-	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_N	; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	$0000			; north bg
-	.word	$0000			; south bg
-	.word	tower1_base_e_lzsa	; east bg
-	.word	$0000			; west bg
-	.byte	BG_EAST
-	.byte	DIRECTION_E	; special exit
-	.byte	10,26		; special x
-	.byte	0,46		; special y
-	.word	leave_tower1-1	; special function
-
-
-; MIST_TOWER1_TOP		-- tower1 top
-location39:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	MIST_TOWER1_BOTTOM	; east exit
-	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_E|DIRECTION_ONLY_POINT	; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	$0000			; north bg
-	.word	$0000			; south bg
-	.word	tower1_top_e_lzsa	; east bg
-	.word	$0000			; west bg
-	.byte	BG_EAST
-	.byte	DIRECTION_E	; special exit
-	.byte	16,22		; special x
-	.byte	10,18		; special y
-	.word	circuit_breaker-1	; special function
-
 ; MIST_VIEWER_DOOR	-- viewer door
-location40:
+location30:
 	.byte	MIST_DOCK_SWITCH	; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
@@ -786,3 +612,182 @@ location40:
 	.byte	2,46		; special y
 	.word	enter_viewer-1	; special function
 
+; MIST_PILLAR_EYE	-- pillar with eye
+location31:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	$ff			; east exit
+	.byte	MIST_POOL		; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	DIRECTION_W	; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	$0000		; east bg
+	.word	pillar_eye_lzsa	; west bg
+	.byte	BG_WEST
+	.byte	DIRECTION_W	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_SNAKE	-- pillar with snake
+location32:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	$ff			; east exit
+	.byte	MIST_POOL		; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	DIRECTION_W	; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	$0000		; east bg
+	.word	pillar_snake_lzsa	; west bg
+	.byte	BG_WEST
+	.byte	DIRECTION_W	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_BUG	-- pillar with bug
+location33:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	$ff			; east exit
+	.byte	MIST_TREE_CORRIDOR_2		; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	DIRECTION_W	; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	$0000		; east bg
+	.word	pillar_bug_lzsa	; west bg
+	.byte	BG_WEST
+	.byte	DIRECTION_W	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_ANCHOR	-- pillar with anchor
+location34:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	$ff			; east exit
+	.byte	MIST_TREE_CORRIDOR_2		; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	DIRECTION_W	; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	$0000		; east bg
+	.word	pillar_anchor_lzsa	; west bg
+	.byte	BG_WEST
+	.byte	DIRECTION_W	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_ARROW	-- pillar with arrow
+location35:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	MIST_TREE_CORRIDOR_2	; east exit
+	.byte	$ff			; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; east exit_dir
+	.byte	$ff		; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	pillar_arrow_lzsa	; east bg
+	.word	$0000		; west bg
+	.byte	BG_EAST
+	.byte	DIRECTION_E	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_LEAF	-- pillar with leaf
+location36:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	MIST_TREE_CORRIDOR_2	; east exit
+	.byte	$ff			; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; east exit_dir
+	.byte	$ff		; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	pillar_leaf_lzsa	; east bg
+	.word	$0000		; west bg
+	.byte	BG_EAST
+	.byte	DIRECTION_E	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_CROSS	-- pillar with cross
+location37:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	MIST_POOL		; east exit
+	.byte	$ff			; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; east exit_dir
+	.byte	$ff		; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	pillar_cross_lzsa	; east bg
+	.word	$0000		; west bg
+	.byte	BG_EAST
+	.byte	DIRECTION_E	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; MIST_PILLAR_EMU	-- pillar with emu
+location38:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	MIST_POOL		; east exit
+	.byte	$ff			; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; east exit_dir
+	.byte	$ff		; west exit_dir
+	.word	$0000		; north bg
+	.word	$0000		; south bg
+	.word	pillar_emu_lzsa	; east bg
+	.word	$0000		; west bg
+	.byte	BG_EAST
+	.byte	DIRECTION_E	; special exit
+	.byte	14,27		; special x
+	.byte	12,30		; special y
+	.word	touch_pillar-1	; special function
+
+; there is a corresponding east background
+; but we are out of room
+
+; MIST_SPACESHIP_PATH		-- spaceship path
+location39:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	$ff			; east exit
+	.byte	MIST_SPACESHIP_FAR	; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	DIRECTION_N	; west exit_dir
+	.word	$0000			; north bg
+	.word	$0000			; south bg
+	.word	$0000			; east bg
+	.word	spaceship_path_w_lzsa	; west bg
+	.byte	BG_WEST
+	.byte	$ff		; special exit

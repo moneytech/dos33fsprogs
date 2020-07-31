@@ -104,9 +104,9 @@ location4:
 	.word	entrance_e_lzsa		; east bg
 	.word	entrance_w_lzsa		; west bg
 	.byte	BG_NORTH|BG_SOUTH|BG_EAST|BG_WEST
-	.byte	DIRECTION_N	; special exit
-	.byte	6,22		; special x
-	.byte	30,46		; special y
+	.byte	DIRECTION_N|DIRECTION_W	; special exit
+	.byte	6,36		; special x
+	.byte	26,46		; special y
 	.word	try_exit_puzzle-1	; special function
 
 
@@ -736,7 +736,7 @@ location39:
 	.byte   DIRECTION_W
 	.byte	14,18		; special x
 	.byte	32,40		; special y
-	.word	take_blue_page-1	; special function
+	.word	meche_take_blue_page-1	; special function
 
 ; MECHE_RED_SECRET_DOOR		-- red room secret door
 location40:
@@ -773,5 +773,5 @@ location41:
 	.byte   DIRECTION_S
 	.byte	22,29		; special x
 	.byte	14,24		; special y
-	.word	take_red_page-1	; special function
+	.word	meche_take_red_page-1	; special function
 

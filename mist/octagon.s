@@ -34,12 +34,20 @@ octagon_start:
 	sta	LEVEL_OVER
 	sta	ANIMATE_FRAME
 
+	; reset fireplace rotation
+	lda	#$ff
+	sta	animate_direction
+
 	; init cursor
 
 	lda	#20
 	sta	CURSOR_X
 	sta	CURSOR_Y
 
+
+	; set up game over status
+
+	jsr	update_game_over
 
 	; set up initial location
 
@@ -74,6 +82,25 @@ game_loop:
 	lda	LOCATION
 	cmp	#OCTAGON_TOWER_ROTATION
 	beq	animate_tower_rotation
+
+	cmp	#OCTAGON_GRID_BOOK
+	beq	looking_at_grid_book
+
+	cmp	#OCTAGON_IN_FIREPLACE
+	beq	in_fireplace_red_page
+
+	cmp	#OCTAGON_GREEN_BOOK_OPEN
+	beq	looking_at_green_book
+
+	cmp	#OCTAGON_IN_FIREPLACE_CLOSED
+	beq	handle_fireplace_puzzle
+
+	cmp	#OCTAGON_FIREPLACE_SHELF
+	bne	check_temple_center
+	jsr	draw_fireplace_shelf_pages
+	jmp	done_foreground
+
+check_temple_center:
 
 	cmp	#OCTAGON_TEMPLE_CENTER
 	bne	check_page_close_red
@@ -138,6 +165,22 @@ animate_elevator:
 
 animate_tower_rotation:
 	jsr	handle_tower_rotation
+	jmp	nothing_special
+
+looking_at_grid_book:
+	jsr	draw_book_grid
+	jmp	nothing_special
+
+looking_at_green_book:
+	jsr	draw_atrus_book
+	jmp	nothing_special
+
+in_fireplace_red_page:
+	jsr	draw_in_fireplace_red_page
+	jmp	nothing_special
+
+handle_fireplace_puzzle:
+	jsr	draw_fireplace_puzzle
 	jmp	nothing_special
 
 animate_red_book:
@@ -394,34 +437,72 @@ draw_page_close:
 
 
 
+	;======================================
+	; draw pages on fireplace shelf
+
+draw_fireplace_shelf_pages:
+
+draw_fireplace_red:
+	lda	RED_PAGES_TAKEN
+	and	#FINAL_PAGE
+	bne	draw_fireplace_blue
+
+	lda	#<red_page_sprite
+	sta	INL
+	lda	#>red_page_sprite
+	sta	INH
+
+	lda	#21
+	sta	XPOS
+
+	lda	#30
+	sta	YPOS
+
+	jsr	put_sprite_crop         ; tail call
+
+draw_fireplace_blue:
+
+	lda	BLUE_PAGES_TAKEN
+	and	#FINAL_PAGE
+	bne	done_fireplace_page
+
+	lda	#<blue_page_sprite
+	sta	INL
+	lda	#>blue_page_sprite
+	sta	INH
+
+	lda	#15
+	sta	XPOS
+
+	lda	#30
+	sta	YPOS
+
+	jsr	put_sprite_crop         ; tail call
+
+done_fireplace_page:
+	rts
+
+
+
+
 
 	;==========================
 	; includes
 	;==========================
 
-.if 0
-	.include	"gr_copy.s"
-	.include	"gr_offsets.s"
-	.include	"gr_pageflip.s"
-	.include	"gr_putsprite_crop.s"
-	.include	"text_print.s"
-	.include	"gr_fast_clear.s"
-	.include	"decompress_fast_v2.s"
-	.include	"keyboard.s"
-	.include	"draw_pointer.s"
-	.include	"audio.s"
-	.include	"end_level.s"
-	.include	"common_sprites.inc"
-	.include	"page_sprites.inc"
-.endif
+	.include "gr_plotpoint.s"
 
 	; level graphics
 	.include	"graphics_octagon/octagon_graphics.inc"
+
+	; sound
+	.include	"simple_sounds.s"
 
 	; puzzles
 	.include	"brother_books.s"
 	.include	"octagon_bookshelf.s"
 	.include	"octagon_rotation.s"
+	.include	"octagon_fireplace.s"
 
 	; linking books
 	.include	"handle_pages.s"

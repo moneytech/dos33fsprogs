@@ -27,11 +27,11 @@ top_shelf:
 
 middle_shelf:
 	cpx	#13
-	bcc	read_burnt_book
+	bcc	read_burnt_book		; blt
 	cpx	#18
-	bcc	read_selenitic
-	cpx	#30
-	bcc	read_burnt_book
+	bcc	read_selenitic		; blt
+	cpx	#28
+	bcc	read_burnt_book		; blt
 	bcs	read_fireplace
 
 bottom_shelf:
@@ -45,8 +45,24 @@ read_burnt_book:
 	jmp	all_done_book
 
 read_fireplace:
-	; FIXME
-	jmp	all_done_book
+	lda	#OCTAGON_GRID_BOOK
+	sta	LOCATION
+	jsr	change_location
+	bit	SET_TEXT
+
+	; reset which page we are on
+
+	lda	#127
+	sta	GRID_PAGE
+	lda	#$1
+	sta	grid_left_h
+	sta	grid_right_h
+	lda	#$27
+	sta	grid_left_to
+	lda	#$28
+	sta	grid_right_to
+
+	rts
 
 read_selenitic:
 	lda     #<selenitic_book_lzsa
@@ -99,6 +115,280 @@ all_done_book:
 	jsr	change_location
 
 	rts
+
+
+
+	;===============================
+	; draw fireplace grid pattern
+	;===============================
+
+	; draw random patterns
+	; base them on memory starting at $2000?
+	; 15 30 45 60 75 90 105 120 135 150 165 180 195 210 225 240 255
+	; 14
+
+draw_book_grid:
+
+	lda	GRID_PAGE
+	cmp	#157
+	beq	draw_page_num
+
+draw_book_grid_left:
+
+	ldy	#8		; Y is VTAB of current line
+fp_book_outer_loop:
+
+	lda	gr_offsets,Y
+	sta	fp_book_smc+1
+	lda	gr_offsets+1,Y
+	clc
+	adc	DRAW_PAGE
+	sta	fp_book_smc+2	; point to begin of line
+
+	lda	GRID_PAGE
+	asl
+	asl
+	asl
+	sta	fp_book_lookup_smc+1
+
+fp_book_lookup_smc:
+	lda	$F000,Y		; use random part of memory?
+	sta	TEMPY
+
+	ldx	#5
+fp_book_inner_loop:
+
+	ror	TEMPY		; rotate value out through carry
+	bcc	fp_space
+	lda	#' '|$80	; draw black space
+	jmp	fp_book_smc
+fp_space:
+	lda	#' '&$3f	; draw white space
+
+fp_book_smc:
+	sta	$400,X		; store char
+
+	inx
+	inx			; skip to next
+
+	cpx	#17
+	bne	fp_book_inner_loop
+
+	iny			; skip to next line
+	iny
+	iny
+	iny
+	cpy	#32
+	bne	fp_book_outer_loop
+
+
+draw_book_grid_right:
+
+	ldy	#8		; Y is VTAB of current line
+fp_book_outer_loopr:
+
+	lda	gr_offsets,Y
+	sta	fp_book_smcr+1
+	lda	gr_offsets+1,Y
+	clc
+	adc	DRAW_PAGE
+	sta	fp_book_smcr+2	; point to begin of line
+
+	lda	GRID_PAGE
+	asl
+	asl
+	asl
+	sta	fp_book_lookup_smcr+1
+
+fp_book_lookup_smcr:
+	lda	$F100,Y		; use random part of memory?
+	sta	TEMPY
+
+	ldx	#25
+fp_book_inner_loopr:
+
+	ror	TEMPY		; rotate value out through carry
+	bcc	fp_spacer
+	lda	#' '|$80	; draw black space
+	jmp	fp_book_smcr
+fp_spacer:
+	lda	#' '&$3f	; draw white space
+
+fp_book_smcr:
+	sta	$400,X		; store char
+
+	inx
+	inx			; skip to next
+
+	cpx	#37
+	bne	fp_book_inner_loopr
+
+	iny			; skip to next line
+	iny
+	iny
+	iny
+	cpy	#32
+	bne	fp_book_outer_loopr
+
+
+
+	; draw page number
+draw_page_num:
+	; line 32? $450?
+
+	lda	#$50
+	sta	OUTL
+	lda	#$4
+	clc
+	adc	DRAW_PAGE
+	sta	OUTH		; point OUTL:OUTH to hundreds place
+
+print_left_page:
+	ldy	#4
+
+	lda	grid_left_h	; store hundreds, skipping if 0
+	beq	glhz
+	ora	#$30
+	sta	(OUTL),Y
+	iny
+glhz:
+	lda	grid_left_to	; store tens, skipping if 0
+	lsr
+	lsr
+	lsr
+	lsr
+	cpy	#4		; if still 4, need leading 0 check
+	bne	glhzy
+	cmp	#0
+	beq	gltz
+glhzy:
+	ora	#$30
+	sta	(OUTL),Y
+	iny
+gltz:
+	lda	grid_left_to	; store ones
+	and	#$f
+	ora	#$30
+	sta	(OUTL),Y
+	iny
+	lda	#' '
+	sta	(OUTL),Y	; write some blanks to erase any
+	iny			; trailing values
+	sta	(OUTL),Y
+
+print_right_page:
+	ldy	#24
+
+	lda	grid_right_h	; store hundreds, skipping if 0
+	beq	glhzr
+	ora	#$30
+	sta	(OUTL),Y
+	iny
+glhzr:
+	lda	grid_right_to	; store tens, skipping if 0
+	lsr
+	lsr
+	lsr
+	lsr
+	cpy	#24		; if still 20, need leading 0 check
+	bne	glhzyr
+	cmp	#0
+	beq	gltzr
+glhzyr:
+	ora	#$30
+	sta	(OUTL),Y
+	iny
+gltzr:
+	lda	grid_right_to	; store ones
+	and	#$f
+	ora	#$30
+	sta	(OUTL),Y
+	iny
+	lda	#' '
+	sta	(OUTL),Y	; write some blanks to erase any
+	iny			; trailing values
+	sta	(OUTL),Y
+
+	rts
+
+
+	;==========================
+	; turn the grid book page
+
+turn_page:
+
+	lda	CURSOR_X
+	cmp	#20
+	bcs	increment_page
+
+decrement_page:
+	ldx	GRID_PAGE
+	cpx	#1
+	beq	done_decrement_page	; don't go lower than 1
+
+	dex
+	dex
+	stx	GRID_PAGE
+
+	; use decimal mode to decrement
+	sed
+	sec
+	lda	grid_left_to
+	sbc	#$2
+	sta	grid_left_to
+	lda	grid_left_h
+	sbc	#$0
+	sta	grid_left_h
+
+	sec
+	lda	grid_right_to
+	sbc	#$2
+	sta	grid_right_to
+	lda	grid_right_h
+	sbc	#$0
+	sta	grid_right_h
+	cld
+
+done_decrement_page:
+	rts
+
+
+increment_page:
+	ldx	GRID_PAGE
+	cpx	#253			; don't go above 253/254
+	beq	done_increment_page
+
+	inx
+	inx
+	stx	GRID_PAGE
+
+	; use decimal mode to increment
+	sed
+	clc
+	lda	grid_left_to
+	adc	#$2
+	sta	grid_left_to
+	lda	grid_left_h
+	adc	#$0
+	sta	grid_left_h
+
+	clc
+	lda	grid_right_to
+	adc	#$2
+	sta	grid_right_to
+	lda	grid_right_h
+	adc	#$0
+	sta	grid_right_h
+	cld
+
+done_increment_page:
+	rts
+
+
+grid_left_h:	.byte	$1
+grid_left_to:	.byte	$27
+grid_right_h:	.byte	$1
+grid_right_to:	.byte	$28
 
 
 
@@ -267,11 +557,12 @@ elevator_goto_library_level:
 	lda	#$ff
 	sta	location18,Y
 
+	jsr	change_location
+
 	lda	#(5|128)
 	sta	ANIMATE_FRAME
 
-	jmp	change_location
-
+	rts
 
 	;===================================
 	;===================================
@@ -288,7 +579,10 @@ open_bookshelf:
 	cmp	#OCTAGON_BOOKSHELF_CLOSE
 	beq	actually_open_shelf
 
-	jsr	cant_noise
+
+	; already open, so beep in protest
+
+	jsr	short_beep
 
 	rts
 
@@ -299,48 +593,48 @@ actually_open_shelf:
 
 	ldy	#LOCATION_SPECIAL_EXIT
 	lda	#$ff
-	sta	location1,Y
+	sta	location1,Y				; OCTAGON_TEMPLE_CENTER
 
 	; change background of bookshelf N
 
 	ldy	#LOCATION_NORTH_BG
 	lda	#<bookshelf_open_n_lzsa
-	sta	location8,Y
+	sta	location8,Y				; OCTAGON_BOOKSHELF
 	lda	#>bookshelf_open_n_lzsa
-	sta	location8+1,Y
+	sta	location8+1,Y				; OCTAGON_BOOKSHELF
 
 	; change background of door N
 
 	lda	#<temple_door_closed_n_lzsa
-	sta	location0,Y
+	sta	location0,Y				; OCTAGON_TEMPLE_DOORWAY
 	lda	#>temple_door_closed_n_lzsa
-	sta	location0+1,Y
+	sta	location0+1,Y				; OCTAGON_TEMPLE_DOORWAY
 
 	; change background of center room S
 
 	ldy	#LOCATION_SOUTH_BG
 	lda	#<temple_center_closed_s_lzsa
-	sta	location1,Y
+	sta	location1,Y				; OCTAGON_TEMPLE_CENTER
 	lda	#>temple_center_closed_s_lzsa
-	sta	location1+1,Y
+	sta	location1+1,Y				; OCTAGON_TEMPLE_CENTER
 
 	; change background of door S
 
 	lda	#<temple_door_closed_s_lzsa
-	sta	location0,Y
+	sta	location0,Y				; OCTAGON_TEMPLE_DOORWAY
 	lda	#>temple_door_closed_s_lzsa
-	sta	location0+1,Y
+	sta	location0+1,Y				; OCTAGON_TEMPLE_DOORWAY
 
 	; disable exit to S
 	ldy	#LOCATION_SPECIAL_EXIT
 	lda	#$ff
-	sta	location0,Y
+	sta	location0,Y				; OCTAGON_TEMPLE_DOORWAY
 
 	; enable exit to N
 
 	ldy	#LOCATION_NORTH_EXIT
 	lda	#OCTAGON_TOWER_HALL1
-	sta	location8,Y
+	sta	location8,Y				; OCTAGON_BOOKSHELF
 
 	; start animation
 
@@ -365,7 +659,7 @@ close_bookshelf:
 	cmp	#OCTAGON_BOOKSHELF_CLOSE
 	bne	actually_close_shelf
 
-	jsr	cant_noise
+	jsr	short_beep
 
 	rts
 
@@ -479,7 +773,11 @@ done_shelf:
 	lda	#OCTAGON_TEMPLE_CENTER
 	sta	LOCATION
 
-	jsr	change_location
+	jsr	change_location_save_animate
+
+	; change location trashes animate frame
+
+
 
 shelf_swirl_no_inc:
 
@@ -505,23 +803,6 @@ door_swirl:
 	jmp	advance_swirl
 
 
-cant_noise:
-	ldx	#$ff
-cant_noise_loop:
-	bit	$c030
-	nop
-	nop
-	nop
-	bit	$c030
-	nop
-	nop
-	nop
-	dex
-	bne	cant_noise_loop
-	rts
-
-
-
 	;=============================
 	; animate_shelf_open
 	;=============================
@@ -529,7 +810,7 @@ animate_shelf_open:
 
 	lda	ANIMATE_FRAME
 	cmp	#5
-	bcs	animate_shelf_close
+	bcs	animate_shelf_close	; bge
 
 	asl
 	tay
@@ -563,7 +844,7 @@ advance_shelf_open:
 	bne	shelf_open_no_inc
 
 	; reset animation/bg
-
+disable_shelf_animate:
 	lda	#0
 	sta	ANIMATE_FRAME
 
@@ -571,7 +852,7 @@ advance_shelf_open:
 
 	ldy	#LOCATION_SPECIAL_EXIT
 	lda	#DIRECTION_ANY
-	sta	location1,Y
+	sta	location1,Y				; OCTAGON_TEMPLE_CENTER
 
 shelf_open_no_inc:
 
@@ -633,27 +914,27 @@ shelf_close_no_dec:
 update_final_shelf_bg:
 
 	ldy	#LOCATION_NORTH_EXIT
-	lda	location8,Y
+	lda	location8,Y			; OCTAGON_BOOKSHELF
 	cmp	#OCTAGON_BOOKSHELF_CLOSE
 	bne	finally_open_shelf
 
 	ldy	#LOCATION_NORTH_BG
 	lda	#<temple_center_n_lzsa
-	sta	location1,Y
+	sta	location1,Y			; OCTAGON_CENTER
 	lda	#>temple_center_n_lzsa
 	jmp	all_done_open_shelf
 
 finally_open_shelf:
 	ldy	#LOCATION_NORTH_BG
 	lda	#<temple_center_open_n_lzsa
-	sta	location1,Y
+	sta	location1,Y			; OCTAGON_CENTER
 	lda	#>temple_center_open_n_lzsa
 
 all_done_open_shelf:
 	sta	location1+1,Y
-	jsr	change_location
 
-	rts
+	jmp	change_location_save_animate
+
 
 ;===============================================
 ;===============================================
@@ -667,6 +948,15 @@ animate_elevator_ride:
 	bpl	elevator_going_up
 
 	jmp	elevator_going_down
+
+
+change_location_save_animate:
+	lda	ANIMATE_FRAME
+	pha
+	jsr	change_location
+	pla
+	sta	ANIMATE_FRAME
+	rts
 
 ;===============================================
 ; elevator going up
@@ -710,7 +1000,7 @@ up_close_door:
 	lda	#>elevator_door_closed_s_lzsa
 	sta	location18+1,Y
 
-	jsr	change_location
+	jsr	change_location_save_animate
 
 	jsr	gr_copy_to_current
 
@@ -723,7 +1013,7 @@ up_light_off:
 	lda	#>elevator_dark_s_lzsa
 	sta	location18+1,Y
 
-	jsr	change_location
+	jsr	change_location_save_animate
 
 up_draw_lib:
 	jsr	draw_elevator_window_lib
@@ -779,7 +1069,7 @@ up_light_on:
 	lda	#>elevator_door_closed_s_lzsa
 	sta	location18+1,Y
 
-	jsr	change_location
+	jsr	change_location_save_animate
 
 	jsr	draw_elevator_window_tower
 
@@ -860,7 +1150,7 @@ down_close_door:
 	lda	#>elevator_door_closed_s_lzsa
 	sta	location18+1,Y
 
-	jsr	change_location
+	jsr	change_location_save_animate
 
 	jsr	gr_copy_to_current
 
@@ -873,7 +1163,7 @@ down_light_off:
 	lda	#>elevator_dark_s_lzsa
 	sta	location18+1,Y
 
-	jsr	change_location
+	jsr	change_location_save_animate
 
 down_draw_tower:
 	jsr	draw_elevator_window_tower
@@ -929,7 +1219,7 @@ down_light_on:
 	lda	#>elevator_door_closed_s_lzsa
 	sta	location18+1,Y
 
-	jsr	change_location
+	jsr	change_location_save_animate
 
 	jsr	draw_elevator_window_lib
 

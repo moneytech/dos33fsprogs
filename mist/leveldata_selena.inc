@@ -15,8 +15,7 @@ locations:
 	.word location32,location33,location34,location35
 	.word location36,location37,location38,location39
 	.word location40,location41,location42,location43
-	.word location44,location45,location46,location47
-	.word location48,location49
+	.word location44,location45,location46
 
 ; SELENA_INSIDE_SHIP		-- Inside Ship
 location0:
@@ -82,7 +81,7 @@ location2:
 
 ; SELENA_WALKWAY1		-- walkway1
 location3:
-	.byte	SELENA_SPACESHIP_PATH	; north exit
+	.byte	SELENA_WALKWAY2		; north exit
 	.byte	SELENA_SPACESHIP_DOOR	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
@@ -117,7 +116,7 @@ location4:
 ; SELENA_WALKWAY4		-- walkway4
 location5:
 	.byte	SELENA_BUNKER		; north exit
-	.byte	SELENA_SPACESHIP_PATH	; south exit
+	.byte	SELENA_WALKWAY3		; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
@@ -139,7 +138,7 @@ location6:
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
-	.byte	DIRECTION_E	; east exit_dir
+	.byte	DIRECTION_E|DIRECTION_SPLIT	; east exit_dir
 	.byte	$ff		; west exit_dir
 	.word	bunker_n_lzsa		; north bg
 	.word	bunker_s_lzsa		; south bg
@@ -148,83 +147,12 @@ location6:
 	.byte	BG_NORTH|BG_SOUTH|BG_EAST
 	.byte	$ff
 
-; SELENA_SUB_ROOM		-- sub room
-location7:
-	.byte	SELENA_SUB_HALLWAY	; north exit
-	.byte	SELENA_INSIDE_SUB	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_W	; north exit_dir
-	.byte	DIRECTION_E	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	subroom_n_lzsa	; north bg
-	.word	subroom_s_lzsa	; south bg
-	.word	$0000		; east bg
-	.word	$0000		; west bg
-	.byte	BG_SOUTH|BG_NORTH
-	.byte	$ff
-
-; SELENA_BOOK_ROOM		-- book room
-location8:
-	.byte	SELENA_BOOK_HALLWAY	; north exit
-	.byte	SELENA_BOOK_CLOSED	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_N	; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	book_table_n_lzsa	; north bg
-	.word	book_table_s_lzsa	; south bg
-	.word	$0000			; east bg
-	.word	$0000			; west bg
-	.byte	BG_SOUTH|BG_NORTH
-	.byte	$ff
-
-; SELENA_BOOK_CLOSED		-- book
-location9:
-	.byte	$ff			; north exit
-	.byte	SELENA_BOOK_OPEN	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	$0000			; north bg
-	.word	book_mist_closed_s_lzsa	; south bg
-	.word	$0000			; east bg
-	.word	$0000			; west bg
-	.byte	BG_SOUTH
-	.byte	$ff
-
-; SELENA_BOOK_OPEN		-- mist book open
-location10:
-	.byte	$ff			; north exit
-	.byte	SELENA_BOOK_ROOM	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	$0000			; north bg
-	.word	book_mist_open_s_lzsa	; south bg
-	.word	$0000			; east bg
-	.word	$0000			; west bg
-	.byte	BG_SOUTH
-	.byte	DIRECTION_S
-	.byte	24,32		; special x
-	.byte	12,22		; special y
-	.word	mist_link_book-1		; special function
-
 ; SELENA_WATER_TURN		-- turnoff for water
-location11:
+location7:
 	.byte	SELENA_TOWER_VIEW		; north exit
 	.byte	SELENA_BUNKER		; south exit
 	.byte	$ff			; east exit
-	.byte	SELENA_WATER_PATH	; west exit
+	.byte	SELENA_WATER_PATH2	; west exit
 	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
@@ -237,14 +165,14 @@ location11:
 	.byte	$ff
 
 ; SELENA_WATER_PATH		-- path to water
-location12:
+location8:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
-	.byte	SELENA_WATER_TURN	; east exit
-	.byte	SELENA_WATER		; west exit
+	.byte	SELENA_WATER_PATH2	; east exit
+	.byte	SELENA_WATER_PATH3	; west exit
 	.byte	$ff		; north exit_dir
 	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_S	; east exit_dir
+	.byte	DIRECTION_E	; east exit_dir
 	.byte	DIRECTION_W	; west exit_dir
 	.word	$0000			; north bg
 	.word	$0000			; south bg
@@ -254,27 +182,27 @@ location12:
 	.byte	$ff
 
 ; SELENA_WATER		-- water
-location13:
+location9:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
-	.byte	SELENA_WATER_PATH	; east exit
+	.byte	SELENA_WATER_PATH3	; east exit
 	.byte	$ff		; west exit
 	.byte	$ff		; north exit_dir
 	.byte	$ff		; south exit_dir
 	.byte	DIRECTION_E	; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	$0000				; north bg
+	.word	water_note_n_lzsa		; north bg
 	.word	water_note_s_lzsa		; south bg
 	.word	water_note_e_lzsa		; east bg
 	.word	water_note_w_lzsa		; west bg
-	.byte	BG_SOUTH|BG_EAST|BG_WEST
-	.byte	DIRECTION_S		; special exit
-	.byte	20,27		; special x
+	.byte	BG_SOUTH|BG_EAST|BG_WEST|BG_NORTH
+	.byte	DIRECTION_S|DIRECTION_W		; special exit
+	.byte	19,27		; special x
 	.byte	24,34		; special y
 	.word	selena_take_blue_page-1	; special function
 
 ; SELENA_TOWER_VIEW		-- tower view
-location14:
+location10:
 	.byte	$ff			; north exit
 	.byte	SELENA_WATER_TURN	; south exit
 	.byte	SELENA_CLOCK_PATH	; east exit
@@ -291,15 +219,15 @@ location14:
 	.byte	$ff
 
 ; SELENA_CHASM_PATH		-- path to chasm
-location15:
+location11:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TOWER_VIEW	; east exit
-	.byte	SELENA_CHASM		; west exit
+	.byte	SELENA_CHASM_PATH2	; west exit
 	.byte	$ff		; north exit_dir
 	.byte	$ff		; south exit_dir
 	.byte	DIRECTION_E	; east exit_dir
-	.byte	DIRECTION_S	; west exit_dir
+	.byte	DIRECTION_W	; west exit_dir
 	.word	$0000				; north bg
 	.word	$0000				; south bg
 	.word	chasm_path_e_lzsa		; east bg
@@ -308,8 +236,8 @@ location15:
 	.byte	$ff
 
 ; SELENA_CHASM			-- chasm
-location16:
-	.byte	SELENA_CHASM_PATH	; north exit
+location12:
+	.byte	SELENA_CHASM_PATH2	; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
@@ -320,12 +248,16 @@ location16:
 	.word	chasm_n_lzsa			; north bg
 	.word	chasm_s_lzsa			; south bg
 	.word	chasm_e_lzsa			; east bg
-	.word	$0000				; west bg
-	.byte	BG_SOUTH|BG_EAST|BG_NORTH
-	.byte	$ff
+	.word	chasm_w_lzsa			; west bg
+	.byte	BG_SOUTH|BG_EAST|BG_NORTH|BG_WEST
+	.byte	DIRECTION_S	; special exit
+	.byte	17,24		; special x
+	.byte	18,26		; special y
+	.word	chasm_button_pressed-1	; special function
+
 
 ; SELENA_CLOCK_PATH			-- path on way to clock
-location17:
+location13:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_CLOCK		; east exit
@@ -342,13 +274,13 @@ location17:
 	.byte	$ff
 
 ; SELENA_CLOCK			-- clocks
-location18:
+location14:
 	.byte	$ff			; north exit
 	.byte	SELENA_CLOCK_CLOSE	; south exit
 	.byte	SELENA_CLOCK_BEFORE	; east exit
 	.byte	SELENA_CLOCK_PATH	; west exit
 	.byte	$ff		; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
+	.byte	DIRECTION_S|DIRECTION_SPLIT	; south exit_dir
 	.byte	DIRECTION_E	; east exit_dir
 	.byte	DIRECTION_W	; west exit_dir
 	.word	clock_n_lzsa			; north bg
@@ -359,7 +291,7 @@ location18:
 	.byte	$ff
 
 ; SELENA_CLOCK_CLOSE		-- clock device
-location19:
+location15:
 	.byte	$ff			; north exit
 	.byte	SELENA_CLOCK		; south exit
 	.byte	$ff			; east exit
@@ -373,10 +305,13 @@ location19:
 	.word	$0000				; east bg
 	.word	$0000				; west bg
 	.byte	BG_SOUTH
-	.byte	$ff
+	.byte	DIRECTION_S		; special exit
+	.byte	17,22		; special x
+	.byte	20,28		; special y
+	.word	clock_button_pressed-1	; special function
 
 ; SELENA_CLOCK_BEFORE	-- path before clocks, when coming from crystals
-location20:
+location16:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_CRYSTAL_TURN	; east exit
@@ -393,7 +328,7 @@ location20:
 	.byte	$ff
 
 ; SELENA_CRYSTAL_TURN	-- crystal turnoff
-location21:
+location17:
 	.byte	$ff			; north exit
 	.byte	SELENA_CRYSTAL_STEPS	; south exit
 	.byte	SELENA_BEFORE_CRYSTALS	; east exit
@@ -410,47 +345,47 @@ location21:
 	.byte	$ff
 
 ; SELENA_CRYSTAL_STEPS	-- top of steps
-location22:
-	.byte	$ff			; north exit
-	.byte	SELENA_CRYSTALS		; south exit
+location18:
+	.byte	SELENA_CRYSTAL_TURN	; north exit
+	.byte	SELENA_CRYSTAL_PATH	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	$ff		; north exit_dir
+	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	$0000				; north bg
+	.word	crystal_steps_n_lzsa		; north bg
 	.word	crystal_steps_s_lzsa		; south bg
 	.word	$0000				; east bg
 	.word	$0000				; west bg
-	.byte	BG_SOUTH
+	.byte	BG_SOUTH|BG_NORTH
 	.byte	$ff
 
 ; SELENA_CRYSTAL_PATH	-- bottom of steps
-location23:
-	.byte	SELENA_CRYSTAL_TURN	; north exit
-	.byte	$ff			; south exit
+location19:
+	.byte	SELENA_CRYSTAL_STEPS	; north exit
+	.byte	SELENA_CRYSTAL_PATH2	; south exit
 	.byte	$ff			; east exit
-	.byte	$ff		; west exit
+	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
-	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
 	.word	crystal_path_n_lzsa		; north bg
-	.word	$0000				; south bg
+	.word	crystal_path_s_lzsa		; south bg
 	.word	$0000				; east bg
 	.word	$0000				; west bg
-	.byte	BG_NORTH
+	.byte	BG_NORTH|BG_SOUTH
 	.byte	$ff
 
 ; SELENA_CRYSTALS		-- down by the crystals
-location24:
-	.byte	SELENA_CRYSTAL_PATH	; north exit
+location20:
+	.byte	SELENA_CRYSTAL_PATH2	; north exit
 	.byte	SELENA_CRYSTAL_CLOSE	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
-	.byte	DIRECTION_E	; south exit_dir
+	.byte	DIRECTION_E|DIRECTION_SPLIT	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
 	.word	crystals_n_lzsa			; north bg
@@ -461,7 +396,7 @@ location24:
 	.byte	$ff
 
 ; SELENA_CRYSTAL_CLOSE		-- at the crystal device
-location25:
+location21:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_CRYSTALS		; east exit
@@ -476,30 +411,30 @@ location25:
 	.word	$0000				; west bg
 	.byte	BG_EAST
 	.byte	DIRECTION_E		; special exit
-	.byte	22,29		; special x
-	.byte	0,10		; special y
+	.byte	14,25		; special x
+	.byte	0,34		; special y
 	.word	selena_take_red_page-1	; special function
 
 
-; SELENA_SPACESHIP_PATH		-- spaceship path/ walkway3?
-location26:
+; SELENA_WALKWAY3		-- spaceship path/ walkway3
+location22:
 	.byte	SELENA_WALKWAY4		; north exit
-	.byte	SELENA_WALKWAY1		; south exit
+	.byte	SELENA_WALKWAY2		; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
-	.word	spaceship_path_n_lzsa		; north bg
-	.word	spaceship_path_s_lzsa		; south bg
-	.word	$0000				; east bg
-	.word	$0000				; west bg
+	.word	walkway3_n_lzsa		; north bg
+	.word	walkway3_s_lzsa		; south bg
+	.word	$0000			; east bg
+	.word	$0000			; west bg
 	.byte	BG_NORTH|BG_SOUTH
 	.byte	$ff
 
 ; SELENA_BEFORE_CRYSTALS	-- before crystals, if coming from tunnel
-location27:
+location23:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL_STEPS	; east exit
@@ -516,7 +451,7 @@ location27:
 	.byte	$ff
 
 ; SELENA_TUNNEL_STEPS	-- steps on way to tunnel
-location28:
+location24:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL_PATH	; east exit
@@ -527,13 +462,13 @@ location28:
 	.byte	DIRECTION_W	; west exit_dir
 	.word	$0000				; north bg
 	.word	$0000				; south bg
-	.word	tunnel_steps_e_lzsa		; east bg
-	.word	tunnel_steps_w_lzsa		; west bg
+	.word	tunnel_steps_w_lzsa		; east bg
+	.word	tunnel_steps_e_lzsa		; west bg
 	.byte	BG_EAST|BG_WEST
 	.byte	$ff
 
 ; SELENA_TUNNEL_PATH	-- path near tunnel
-location29:
+location25:
 	.byte	SELENA_TUNNEL_MAINLAND	; north exit
 	.byte	SELENA_TUNNEL_STEPS	; south exit
 	.byte	$ff			; east exit
@@ -550,12 +485,12 @@ location29:
 	.byte	$ff
 
 ; SELENA_TUNNEL_MAINLAND	-- mainland tunnel entrance
-location30:
+location26:
 	.byte	SELENA_TUNNEL_MAIN_CLOSE; north exit
 	.byte	SELENA_TUNNEL_PATH	; south exit
 	.byte	$ff			; east exit
 	.byte	$ff			; west exit
-	.byte	DIRECTION_N	; north exit_dir
+	.byte	DIRECTION_N|DIRECTION_SPLIT	; north exit_dir
 	.byte	DIRECTION_W	; south exit_dir
 	.byte	$ff		; east exit_dir
 	.byte	$ff		; west exit_dir
@@ -570,7 +505,7 @@ location30:
 	.word	tunnel_main_down-1	; special function
 
 ; SELENA_TUNNEL_MAIN_CLOSE	-- note panel on the tunnel
-location31:
+location27:
 	.byte	SELENA_TUNNEL_MAINLAND	; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
@@ -584,10 +519,13 @@ location31:
 	.word	$0000				; east bg
 	.word	$0000				; west bg
 	.byte	BG_NORTH
-	.byte	$ff
+	.byte	DIRECTION_N		; special exit
+	.byte	17,22		; special x
+	.byte	26,34		; special y
+	.word	tunnel_button_pressed-1	; special function
 
 ; SELENA_TUNNEL_MAIN_TOP	-- top of the ladder
-location32:
+location28:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL_MAINLAND	; east exit
@@ -607,7 +545,7 @@ location32:
 	.word	tunnel_main_top_down-1	; special function
 
 ; SELENA_TUNNEL_MAIN_MID	-- middle of ladder
-location33:
+location29:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL_MAIN_TOP	; east exit
@@ -627,7 +565,7 @@ location33:
 	.word	tunnel_main_mid_down-1	; special function
 
 ; SELENA_TUNNEL_BASEMENT	-- bottom of ladder
-location34:
+location30:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL_MAIN_MID	; east exit
@@ -641,10 +579,14 @@ location34:
 	.word	ladder_bottom_lzsa		; east bg
 	.word	tunnel_basement_lzsa		; west bg
 	.byte	BG_EAST|BG_WEST
-	.byte	$ff
+	.byte	DIRECTION_W		; special exit
+	.byte	32,40		; special x
+	.byte	22,36		; special y
+	.word	tunnel_toggle_lights-1	; special function
+
 
 ; SELENA_TUNNEL		-- middle of tunnel (dark for now)
-location35:
+location31:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL_BASEMENT	; east exit
@@ -661,7 +603,7 @@ location35:
 	.byte	$ff
 
 ; SELENA_ANTENNA_BASEMENT	-- basement near antenna
-location36:
+location32:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_TUNNEL		; east exit
@@ -675,10 +617,13 @@ location36:
 	.word	tunnel_basement_lzsa		; east bg
 	.word	ladder_bottom_lzsa		; west bg
 	.byte	BG_EAST|BG_WEST
-	.byte	$ff
+	.byte	DIRECTION_E		; special exit
+	.byte	32,40		; special x
+	.byte	22,36		; special y
+	.word	tunnel_toggle_lights-1	; special function
 
 ; SELENA_ANTENNA_MID	-- antenna ladder, mid
-location37:
+location33:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_ANTENNA_TOP	; east exit
@@ -697,9 +642,8 @@ location37:
 	.byte	24,46		; special y
 	.word	antenna_mid_down-1	; special function
 
-
 ; SELENA_ANTENNA_TOP	-- staring down ladder near antenna
-location38:
+location34:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_ANTENNA_TUNNEL	; east exit
@@ -719,7 +663,7 @@ location38:
 	.word	antenna_mid_down-1	; special function
 
 ; SELENA_ANTENNA_TUNNEL	-- top of ladder near antenna
-location39:
+location35:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
@@ -739,7 +683,7 @@ location39:
 	.word	antenna_down-1	; special function
 
 ; SELENA_ANTENNA_STEPS		-- steps near antenna
-location40:
+location36:
 	.byte	SELENA_ANTENNA		; north exit
 	.byte	SELENA_ANTENNA_TUNNEL	; south exit
 	.byte	$ff			; east exit
@@ -756,7 +700,7 @@ location40:
 	.byte	$ff
 
 ; SELENA_ANTENNA	-- base of antenna
-location41:
+location37:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_ANTENNA_STEPS	; east exit
@@ -773,7 +717,7 @@ location41:
 	.byte	$ff
 
 ; SELENA_ANTENNA_OPEN	-- antenna panel open
-location42:
+location38:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_ANTENNA_STEPS	; east exit
@@ -781,7 +725,7 @@ location42:
 	.byte	$ff		; north exit_dir
 	.byte	$ff		; south exit_dir
 	.byte	DIRECTION_S	; east exit_dir
-	.byte	DIRECTION_W	; west exit_dir
+	.byte	DIRECTION_W|DIRECTION_SPLIT	; west exit_dir
 	.word	$0000				; north bg
 	.word	$0000				; south bg
 	.word	antenna_e_lzsa			; east bg
@@ -790,7 +734,7 @@ location42:
 	.byte	$ff
 
 ; SELENA_ANTENNA_CLOSE	-- antenna panel
-location43:
+location39:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	$ff			; east exit
@@ -804,81 +748,16 @@ location43:
 	.word	$0000				; east bg
 	.word	antenna_close_w_lzsa		; west bg
 	.byte	BG_WEST
-	.byte	$ff
-
-; SELENA_BOOK_HALLWAY	-- hallway to the book room
-location44:
-	.byte	SELENA_INSIDE_SUB	; north exit
-	.byte	SELENA_BOOK_ROOM	; south exit
-	.byte	$ff			; east exit
-	.byte	$ff			; west exit
-	.byte	DIRECTION_E	; north exit_dir
-	.byte	DIRECTION_S	; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	$ff		; west exit_dir
-	.word	book_hallway_n_lzsa		; north bg
-	.word	book_hallway_s_lzsa		; south bg
-	.word	$0000				; east bg
-	.word	$0000				; west bg
-	.byte	BG_NORTH|BG_SOUTH
-	.byte	$ff
-
-; SELENA_INSIDE_SUB	-- inside the submarine
-location45:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	$ff			; east exit
-	.byte	SELENA_BOOK_HALLWAY	; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	$ff		; east exit_dir
-	.byte	DIRECTION_S	; west exit_dir
-	.word	$0000				; north bg
-	.word	$0000				; south bg
-	.word	inside_sub_e_lzsa		; east bg
-	.word	inside_sub_w_lzsa		; west bg
-	.byte	BG_EAST|BG_WEST
-	.byte	$ff
-
-; SELENA_SUB_HALLWAY	-- hallway to the sub room
-location46:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	SELENA_SUB_ROOM		; east exit
-	.byte	SELENA_BUNKER_ENTRY	; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_S	; east exit_dir
-	.byte	DIRECTION_W	; west exit_dir
-	.word	$0000				; north bg
-	.word	$0000				; south bg
-	.word	sub_hallway_e_lzsa		; east bg
-	.word	sub_hallway_w_lzsa		; west bg
-	.byte	BG_EAST|BG_WEST
-	.byte	$ff
-
-; SELENA_BUNKER_ENTRY	-- entryway inside bunker
-location47:
-	.byte	$ff			; north exit
-	.byte	$ff			; south exit
-	.byte	SELENA_SUB_HALLWAY	; east exit
-	.byte	SELENA_BUNKER		; west exit
-	.byte	$ff		; north exit_dir
-	.byte	$ff		; south exit_dir
-	.byte	DIRECTION_E	; east exit_dir
-	.byte	DIRECTION_N	; west exit_dir
-	.word	$0000				; north bg
-	.word	$0000				; south bg
-	.word	bunker_entry_e_lzsa		; east bg
-	.word	bunker_entry_w_lzsa		; west bg
-	.byte	BG_EAST|BG_WEST
-	.byte	$ff
+	.byte	DIRECTION_W		; special exit
+	.byte	6,32		; special x
+	.byte	24,40		; special y
+	.word	touch_antenna_panel-1	; special function
 
 ; SELENA_BUNKER_OPEN	-- bunker with door open
-location48:
+location40:
 	.byte	SELENA_WATER_TURN	; north exit
 	.byte	SELENA_WALKWAY4		; south exit
-	.byte	SELENA_BUNKER_ENTRY	; east exit
+	.byte	$ff			; east exit
 	.byte	$ff			; west exit
 	.byte	DIRECTION_N	; north exit_dir
 	.byte	DIRECTION_S	; south exit_dir
@@ -889,11 +768,13 @@ location48:
 	.word	bunker_open_e_lzsa	; east bg
 	.word	$0000			; west bg
 	.byte	BG_NORTH|BG_SOUTH|BG_EAST
-	.byte	$ff
-
+	.byte	DIRECTION_E		; special exit
+	.byte	15,27		; special x
+	.byte	6,42		; special y
+	.word	goto_sub-1	; special function
 
 ; SELENA_BUNKER_KEYPAD	-- bunker keypad
-location49:
+location41:
 	.byte	$ff			; north exit
 	.byte	$ff			; south exit
 	.byte	SELENA_BUNKER		; east exit
@@ -908,6 +789,92 @@ location49:
 	.word	$0000				; west bg
 	.byte	BG_EAST
 	.byte	DIRECTION_E		; special exit
-	.byte	12,28		; special x
-	.byte	10,32		; special y
-	.word	keypad_press-1	; special function
+	.byte	10,30		; special x
+	.byte	8,32		; special y
+	.word	door_controls_pressed-1	; special function
+
+; SELENA_WALKWAY2		-- walkway2
+location42:
+	.byte	SELENA_WALKWAY3		; north exit
+	.byte	SELENA_WALKWAY1		; south exit
+	.byte	$ff			; east exit
+	.byte	$ff			; west exit
+	.byte	DIRECTION_N	; north exit_dir
+	.byte	DIRECTION_S	; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	$ff		; west exit_dir
+	.word	walkway2_n_lzsa		; north bg
+	.word	walkway2_s_lzsa		; south bg
+	.word	$0000			; east bg
+	.word	$0000			; west bg
+	.byte	BG_NORTH|BG_SOUTH
+	.byte	$ff
+
+; SELENA_WATER_PATH2		-- more path to water
+location43:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	SELENA_WATER_TURN	; east exit
+	.byte	SELENA_WATER_PATH	; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_S	; east exit_dir
+	.byte	DIRECTION_W	; west exit_dir
+	.word	$0000			; north bg
+	.word	$0000			; south bg
+	.word	water_path2_e_lzsa	; east bg
+	.word	water_path2_w_lzsa	; west bg
+	.byte	BG_EAST|BG_WEST
+	.byte	$ff
+
+; SELENA_WATER_PATH3		-- more path to water
+location44:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	SELENA_WATER_PATH	; east exit
+	.byte	SELENA_WATER		; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; east exit_dir
+	.byte	DIRECTION_W	; west exit_dir
+	.word	$0000			; north bg
+	.word	$0000			; south bg
+	.word	water_path3_e_lzsa	; east bg
+	.word	water_path3_w_lzsa	; west bg
+	.byte	BG_EAST|BG_WEST
+	.byte	$ff
+
+; SELENA_CHASM_PATH2		-- another path to chasm
+location45:
+	.byte	$ff			; north exit
+	.byte	$ff			; south exit
+	.byte	SELENA_CHASM_PATH	; east exit
+	.byte	SELENA_CHASM		; west exit
+	.byte	$ff		; north exit_dir
+	.byte	$ff		; south exit_dir
+	.byte	DIRECTION_E	; east exit_dir
+	.byte	DIRECTION_S	; west exit_dir
+	.word	$0000				; north bg
+	.word	$0000				; south bg
+	.word	chasm_path2_e_lzsa		; east bg
+	.word	chasm_path2_w_lzsa		; west bg
+	.byte	BG_EAST|BG_WEST
+	.byte	$ff
+
+; SELENA_CRYSTAL_PATH2		-- another path to crystal
+location46:
+	.byte	SELENA_CRYSTAL_PATH	; north exit
+	.byte	SELENA_CRYSTALS		; south exit
+	.byte	$ff			; east exit
+	.byte	$ff			; west exit
+	.byte	DIRECTION_N	; north exit_dir
+	.byte	DIRECTION_S	; south exit_dir
+	.byte	$ff		; east exit_dir
+	.byte	$ff		; west exit_dir
+	.word	crystal_path2_n_lzsa		; north bg
+	.word	crystal_path2_s_lzsa		; south bg
+	.word	$0000				; east bg
+	.word	$0000				; west bg
+	.byte	BG_NORTH|BG_SOUTH
+	.byte	$ff
+

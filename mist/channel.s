@@ -52,10 +52,13 @@ channel_start:
 
 	; reset elevators and bridges at start
 	; actual game does this too?
+	; do this in the linking book otherwise this happens
+	; when we take the elevator back down
 
-	lda	CHANNEL_SWITCHES
-	and	#~(CHANNEL_BRIDGE_UP|CHANNEL_PIPE_EXTENDED|CHANNEL_BOOK_ELEVATOR_UP)
-	sta	CHANNEL_SWITCHES
+;	lda	CHANNEL_SWITCHES
+;	; hack to avoid "RANGE ERROR" on some versions of ca65
+;	and	#<(~(CHANNEL_BRIDGE_UP|CHANNEL_PIPE_EXTENDED|CHANNEL_BOOK_ELEVATOR_UP))
+;	sta	CHANNEL_SWITCHES
 
 	; set up bridges
 
@@ -83,9 +86,24 @@ game_loop:
 	;====================================
 
 	lda	LOCATION
+
+	cmp	#CHANNEL_TANK_CLOSE
+	beq	fg_draw_faucet
+
+	cmp	#CHANNEL_WINDMILL
+	beq	fg_draw_windmill_handle
+
 	cmp	#CHANNEL_BOOK_OPEN
 	beq	animate_mist_book
 
+	jmp	nothing_special
+
+fg_draw_windmill_handle:
+	jsr	draw_windmill_handle
+	jmp	nothing_special
+
+fg_draw_faucet:
+	jsr	draw_water_faucet
 	jmp	nothing_special
 
 animate_mist_book:
@@ -189,27 +207,12 @@ toggle_faucet:
 	;==========================
 	; includes
 	;==========================
-.if 0
-	.include	"gr_copy.s"
-	.include	"gr_offsets.s"
-	.include	"gr_pageflip.s"
-	.include	"gr_putsprite_crop.s"
-	.include	"text_print.s"
-	.include	"gr_fast_clear.s"
-	.include	"decompress_fast_v2.s"
-	.include	"keyboard.s"
-	.include	"draw_pointer.s"
-	.include	"end_level.s"
-	.include	"audio.s"
-	.include	"common_sprites.inc"
-	.include	"page_sprites.inc"
-
-
-.endif
 
 	; level graphics
 	.include	"graphics_channel/channel_graphics.inc"
 
+	; sound
+	.include	"simple_sounds.s"
 
 	; puzzles
 	.include	"channel_switches.s"
@@ -219,5 +222,4 @@ toggle_faucet:
 
 	; linking books
 	.include	"link_book_mist.s"
-;	.include	"link_book_channel.s"
 

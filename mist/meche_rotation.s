@@ -3,56 +3,26 @@
 	; book page stuff
 	;==============================
 
-take_blue_page:
-
-	; FIXME: if we came back we could return page
-	;	should check to see if carrying first
-	;	also what if holding red, click blu
+grab_blue_page:
 
 	lda	BLUE_PAGES_TAKEN
-	eor	#MECHE_PAGE
-	sta	BLUE_PAGES_TAKEN
-
-	; FIXME: if holding another page, put it down?
-
 	and	#MECHE_PAGE
-	beq	dropped_blue_page
+	bne	missing_page
 
-	lda	#HOLDING_BLUE_PAGE
-	sta	HOLDING_PAGE
-	rts
+	lda	#MECHE_PAGE
+	jmp	take_blue_page
 
-dropped_blue_page:
-	lda	#0
-	sta	HOLDING_PAGE
-
-	rts
-
-take_red_page:
-
-	; FIXME: if we came back we could return page
-	;	should check to see if carrying first
-	;	also what if holding red, click blu
+grab_red_page:
 
 	lda	RED_PAGES_TAKEN
-	eor	#MECHE_PAGE
-	sta	RED_PAGES_TAKEN
-
-	; FIXME: if holding another page, put it down?
-
 	and	#MECHE_PAGE
-	beq	dropped_red_page
+	bne	missing_page
 
-	lda	#HOLDING_RED_PAGE
-	sta	HOLDING_PAGE
+	lda	#MECHE_PAGE
+	jmp	take_red_page
+
+missing_page:
 	rts
-
-dropped_red_page:
-	lda	#0
-	sta	HOLDING_PAGE
-
-	rts
-
 
 
 
@@ -81,7 +51,7 @@ enter_red_secret:
 
 exit_puzzle_button_press:
 
-	bit	$c030		; click speaker
+	jsr	click_speaker	; click speaker
 
 	lda	CURSOR_Y
 	cmp	#40
@@ -269,17 +239,45 @@ draw_exit_puzzle_sprites:
 
 	;=========================================
 	; exit puzzle first
-	; we really have two entrance points but on same node
-	; so can't have both??
+	;
+	; we have two exits to puzzle, one N and W, try to handle both
+	;	not really opitmal
 
 	; also handle path to book
 
 try_exit_puzzle:
 
+	lda	DIRECTION
+	and	#$f
+	cmp	#DIRECTION_N
+	beq	exit_facing_north
+
+exit_facing_west:
+	lda	CURSOR_X
+	cmp	#29
+	bcs	go_to_puzzle		 ; bge
+
+	; didn't click on the puzzle so instead go to MECHE_ARRIVAL
+
+	lda	#MECHE_ARRIVAL
+	sta	LOCATION
+	jmp	change_location
+
+go_to_puzzle:
+	lda	#DIRECTION_N
+	sta	DIRECTION
+	jmp	do_puzzle
+
+
+exit_facing_north:
+
 	lda	CURSOR_X
 	cmp	#14
-	bcc	do_puzzle
+	bcc	do_puzzle		; if less than 14 go to puzzle
+	cmp	#23			; if greater than 22 go to MECHE_FORT_VIEW
+	bcs	cant_go_there
 
+exit_check_for_tunnel:
 	; not puzzle, instead go down steps if available
 
 	jsr	check_puzzle_solved
@@ -287,9 +285,12 @@ try_exit_puzzle:
 
 	lda	#MECHE_BOOK_STAIRS
 	sta	LOCATION
-	jsr	change_location
+	jmp	change_location
+
 cant_go_there:
-	rts
+	lda	#MECHE_FORT_VIEW
+	sta	LOCATION
+	jmp	change_location
 
 do_puzzle:
 	lda	#MECHE_EXIT_PUZZLE

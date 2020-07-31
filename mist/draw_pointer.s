@@ -96,6 +96,15 @@ really_not_special:
 	; otherwise, finger_point
 
 finger_point:
+	; holding item takes precednce
+	lda	HOLDING_ITEM
+	cmp	#HOLDING_MATCH
+	beq	match_finger
+	cmp	#HOLDING_LIT_MATCH
+	beq	match_lit_finger
+	cmp	#HOLDING_KEY
+	beq	key_finger
+
 	lda	HOLDING_PAGE
 	and	#$c0
 	beq	real_finger_point
@@ -103,12 +112,35 @@ finger_point:
 	beq	blue_finger
 	cmp	#HOLDING_WHITE_PAGE
 	beq	white_finger
+	cmp	#HOLDING_RED_PAGE
+;	beq	red_finger
 
 red_finger:
 	lda     #<finger_red_page_sprite
 	sta	INL
 	lda     #>finger_red_page_sprite
 	jmp	finger_draw
+
+	; all that's left is key
+key_finger:
+	lda     #<finger_key_sprite
+	sta	INL
+	lda     #>finger_key_sprite
+	jmp	finger_draw
+
+match_finger:
+	lda     #<finger_match_sprite
+	sta	INL
+	lda     #>finger_match_sprite
+	jmp	finger_draw
+
+match_lit_finger:
+	lda     #<finger_match_lit_sprite
+	sta	INL
+	lda     #>finger_match_lit_sprite
+	jmp	finger_draw
+
+
 
 blue_finger:
 	lda     #<finger_blue_page_sprite
@@ -218,11 +250,17 @@ no_draw_pointer:
 ; 1 = left
 ; 2 = left u-turn
 ; R/L   EWSN    0010
+
+; 1010
+
 direction_lookup:
 direction_lookup_n:
 	.byte $00,$00,$22,$22,$01,$01,$21,$21,$10,$10,$12,$12,$11,$11,$11,$11
 direction_lookup_s:
-	.byte $00,$22,$00,$22,$10,$12,$10,$12,$01,$01,$21,$21,$11,$11,$11,$11
+	;           N   S   SN  W   WN  WS WSN
+	.byte $00, $22,$00,$22,$10,$12,$10,$12
+	;      E   EN  ES ESN  EW  EWN EWS EWSN
+	.byte $01,$02,$01,$21,$11,$11,$11,$11
 direction_lookup_e:
 	.byte $00,$01,$10,$11,$22,$21,$12,$11,$00,$01,$10,$11,$22,$21,$12,$11
 direction_lookup_w:

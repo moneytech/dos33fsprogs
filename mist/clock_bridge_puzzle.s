@@ -1,3 +1,7 @@
+; note, the clock is a bit different in the real game
+; can't see face when pressing buttons
+; and the way the hands move is a bit more complex
+
 ;======================
 ; reset the puzzle inside the clock
 
@@ -120,6 +124,10 @@ inside_done:
 
 draw_clock_inside:
 
+	lda	DIRECTION
+	cmp	#DIRECTION_S
+	bne	done_draw_clock_puzzle
+
 	; draw weight
 
 	lda	#<clock_weight_sprite
@@ -179,7 +187,7 @@ draw_clock_inside:
 	lda	#16
 	sta	YPOS
 	jsr	put_sprite_crop
-
+done_draw_clock_puzzle:
 	rts
 
 
@@ -320,9 +328,21 @@ draw_clock_face:
 	lda	clock_hour_sprites+1,Y
 	sta	INH
 
+	lda	LOCATION
+	cmp	#MIST_CLOCK
+	bne	old_clock_face
+
+new_clock_face:
+	lda	#24
+	sta	XPOS
+	lda	#8
+	bne	done_clock_face		; bra
+
+old_clock_face:
 	lda	#20
 	sta	XPOS
 	lda	#6
+done_clock_face:
 	sta	YPOS
 	jsr	put_sprite_crop
 
@@ -334,9 +354,22 @@ draw_clock_face:
 	lda	clock_minute_sprites+1,Y
 	sta	INH
 
+	lda	LOCATION
+	cmp	#MIST_CLOCK
+	bne	old_clock_face2
+
+new_clock_face2:
+	lda	#24
+	sta	XPOS
+	lda	#8
+	bne	done_clock_face2	; bra
+
+old_clock_face2:
 	lda	#20
 	sta	XPOS
 	lda	#6
+done_clock_face2:
+
 	sta	YPOS
 	jsr	put_sprite_crop
 done_draw_clock_face:
@@ -395,7 +428,7 @@ bridge_down:
 bridge_adjust:
 	sta	CLOCK_BRIDGE
 
-	bit	$C030		; click speaker
+	jsr	click_speaker		; click speaker
 
 	jsr	raise_bridge
 
@@ -415,8 +448,8 @@ clock_puzzle_done:
 gear_block_sprite1:
 	.byte 4,3
 	.byte $ff,$ff,$ff,$ff
-	.byte $ff,$ff,$ff,$ff
-	.byte $ff,$ff,$ff,$0f
+	.byte $df,$df,$df,$df
+	.byte $ff,$dd,$ff,$0f
 
 ; put at 9,6 on screen 20 N
 gear_block_sprite2:

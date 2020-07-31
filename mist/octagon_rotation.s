@@ -49,7 +49,7 @@ mask_smc:
 	tay
 
 skip_sprite:
-	rol	mask_smc+1
+	asl	mask_smc+1
 
 	iny
 	iny
@@ -87,8 +87,9 @@ draw_tower_line:
 
 	; set color
 	ldy	TOWER_ROTATION
-	ldx	line_colors,Y
 
+	; only 4 hint rotations, so only change line color if one of those
+	ldx	line_colors,Y
 	cpx	#$77
 	beq	color_good
 
@@ -170,32 +171,6 @@ tower_line_loop:
 	jmp	tower_line_loop
 
 done_tower_line:
-
-	rts
-
-
-	; turn on double high point at CH,CV
-plot_point:
-	lda	CV		; y
-	lsr
-	lsr
-	and	#$fe		; make even
-	tax
-	lda	gr_offsets,X
-	sta	OUTL
-
-	lda	gr_offsets+1,X
-	clc
-	adc	DRAW_PAGE
-	sta	OUTH
-
-	lda	CH		; X * 2
-	lsr
-	tay
-
-plot_color:
-	lda	#$77
-	sta	(OUTL),Y
 
 	rts
 

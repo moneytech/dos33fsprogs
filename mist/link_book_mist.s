@@ -13,21 +13,9 @@ mist_link_book:
 	jsr	clear_all
 	jsr	page_flip
 
-	; play sound effect?
+	; play sound effect
 
-	lda	#<linking_noise
-	sta	BTC_L
-	lda	#>linking_noise
-	sta	BTC_H
-
-	ldy	#0
-	lda	(BTC_L),Y
-	cmp	#$55			; hack
-	bne	skip_audio
-
-	ldx	#LINKING_NOISE_LENGTH		; 45 pages long???
-	jsr	play_audio
-skip_audio:
+	jsr	play_link_noise
 
 	lda	#OCTAGON_CEILING
 	sta	LOCATION

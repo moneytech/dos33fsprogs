@@ -11,6 +11,26 @@ handle_keypress:
 
 keypress:
 	and	#$7f			; clear high bit
+	and	#$df			; convert uppercase to lower case
+
+check_sound:
+	cmp	#$14			; control-T
+	bne	check_joystick
+
+	lda	SOUND_STATUS
+	eor	#SOUND_DISABLED
+	sta	SOUND_STATUS
+	jmp	done_keypress
+
+	; can't be ^J as that's the same as down
+check_joystick:
+	cmp	#$10			; control-P
+	bne	check_load
+
+	lda	JOYSTICK_ENABLED
+	eor	#1
+	sta	JOYSTICK_ENABLED
+	jmp	done_keypress
 
 check_load:
 	cmp	#$C			; control-L

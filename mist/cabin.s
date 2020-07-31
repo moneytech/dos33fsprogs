@@ -42,6 +42,8 @@ cabin_start:
 
 	; set up initial location
 
+	jsr	cabin_update_state
+
 	jsr	change_location
 
 	lda	#1
@@ -67,12 +69,86 @@ game_loop:
 	jsr	gr_copy_to_current
 
 	;====================================
+	; handle matches
+	;====================================
+
+check_match_lit_outside:
+	lda	LOCATION
+	cmp	#CABIN_OUTSIDE
+	bne	check_match_on_pilot
+
+	; FIXME: actual game match sputters a bit before going out
+	lda	HOLDING_ITEM
+	cmp	#HOLDING_MATCH
+	beq	put_out_match
+	cmp	#HOLDING_LIT_MATCH
+	bne	check_match_on_pilot
+put_out_match:
+	lda	#0
+	sta	HOLDING_ITEM
+
+check_match_on_pilot:
+	lda	LOCATION
+	cmp	#CABIN_INSIDE
+	bne	done_match_handler
+
+	lda	DIRECTION
+	and	#$f
+	cmp	#DIRECTION_E
+	bne	done_match_handler
+
+	lda	HOLDING_ITEM
+	cmp	#HOLDING_LIT_MATCH
+	bne	done_match_handler
+
+	lda	CURSOR_Y
+	cmp	#34
+	bcc	done_match_handler
+
+	lda	CURSOR_X
+	cmp	#13
+	bcc	done_match_handler
+	cmp	#17
+	bcs	done_match_handler
+
+	lda	#$80		; light pilot
+	sta	BOILER_LEVEL
+
+	lda	#$0		; drop match
+	sta	HOLDING_ITEM
+
+done_match_handler:
+
+	;====================================
 	; handle special-case forground logic
 	;====================================
+
+	jsr	update_boiler_state
+
+	jsr	draw_marker_switch
 
 	lda	LOCATION
 	cmp	#CABIN_TREE_BOOK_OPEN
 	beq	animate_channel_book
+
+	cmp	#CABIN_SAFE
+	bne	check_boiler
+	jsr	draw_safe_combination
+	jmp	nothing_special
+
+check_boiler:
+	cmp	#CABIN_INSIDE
+	bne	check_basement
+
+	jsr	draw_valve_cabin
+
+	jmp	nothing_special
+
+check_basement:
+	cmp	#CABIN_TREE_BASEMENT
+	bne	nothing_special
+
+	jsr	draw_valve_basement
 
 	jmp	nothing_special
 
@@ -154,6 +230,7 @@ really_exit:
 	jmp	end_level
 
 
+	; exit back to mist by the clock path
 
 enter_clock:
 
@@ -175,8 +252,11 @@ handle_clearing:
 	; else going east
 
 	lda	CURSOR_X
-	cmp	#23
+	cmp	#22
 	bcc	enter_cabin
+
+	cmp	#27
+	bcc	marker_switch
 
 enter_tree_path:
 	lda	#DIRECTION_E
@@ -187,11 +267,25 @@ enter_tree_path:
 
 	jmp	change_location
 
+marker_switch:
+	lda	#MARKER_TREE
+	jmp	click_marker_switch
 
 enter_cabin:
 	lda	#DIRECTION_E
 	sta	DIRECTION
+
+	lda	LOCATION
+	cmp	#CABIN_OPEN
+	bne	open_the_door
+
+	lda	#CABIN_ENTRANCE
+	bne	done_enter_cabin	; bra
+
+open_the_door:
 	lda	#CABIN_OPEN
+
+done_enter_cabin:
 	sta	LOCATION
 	jmp	change_location
 
@@ -223,10 +317,11 @@ exit_to_mist:
 
 	; level graphics
 	.include	"graphics_cabin/cabin_graphics.inc"
-
+	.include	"number_sprites.inc"
 
 	; puzzles
-;	.include	"channel_switches.s"
+	.include	"marker_switch.s"
+	.include	"cabin_boiler_puzzle.s"
 
 	; level data
 	.include	"leveldata_cabin.inc"
@@ -234,3 +329,4 @@ exit_to_mist:
 	; linking books
 	.include	"link_book_channel.s"
 
+	.include	"simple_sounds.s"

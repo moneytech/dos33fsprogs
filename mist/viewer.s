@@ -40,6 +40,9 @@ viewer_start:
 	sta	CURSOR_X
 	sta	CURSOR_Y
 
+	; set up ship backgrounds
+	jsr	setup_backgrounds
+
 	; set up initial location
 
 	jsr	change_location
@@ -152,28 +155,35 @@ back_to_mist:
 	rts
 
 
+	; handle ship up or down
+setup_backgrounds:
+
+	lda	SHIP_RAISED
+	beq	done_raised
+
+	ldy	#LOCATION_EAST_BG
+
+	lda	#<viewer_entrance_ship_e_lzsa
+	sta	location0,Y			; VIEWER_ENTRANCE
+	lda	#>viewer_entrance_ship_e_lzsa
+	sta	location0+1,Y			; VIEWER_ENTRANCE
+
+	lda	#<viewer_stairs_ship_e_lzsa
+	sta	location1,Y			; VIEWER_SHIP
+	lda	#>viewer_stairs_ship_e_lzsa
+	sta	location1+1,Y			; VIEWER_SHIP
+
+done_raised:
+	rts
+
+
 	;==========================
 	; includes
 	;==========================
 
-.if 0
-	.include	"gr_copy.s"
-	.include	"gr_offsets.s"
-	.include	"gr_pageflip.s"
-	.include	"gr_putsprite_crop.s"
-	.include	"text_print.s"
-	.include	"gr_fast_clear.s"
-	.include	"decompress_fast_v2.s"
-	.include	"keyboard.s"
-	.include	"draw_pointer.s"
-	.include	"end_level.s"
-	.include	"common_sprites.inc"
-	.include	"page_sprites.inc"
-
-.endif
-
 	; graphics
 	.include	"graphics_viewer/viewer_graphics.inc"
+	.include	"number_sprites.inc"
 
 	; puzzles
 	.include	"viewer_controls.s"

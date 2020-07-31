@@ -44,19 +44,22 @@ mist_start:
 	sta	CURSOR_X
 	sta	CURSOR_Y
 
-	; set up initial location
-
-	jsr	change_location
-
-	lda	#1
-	sta	CURSOR_VISIBLE		; visible at first
-
 	; init the clock bridge
 	jsr	raise_bridge
 
 	; init the gear
 	jsr	open_the_gear
 
+	; make the ship right
+
+	jsr	adjust_ship
+
+	; set up initial location
+
+	jsr	change_location
+
+	lda	#1
+	sta	CURSOR_VISIBLE		; visible at first
 
 game_loop:
 	;=================
@@ -78,6 +81,11 @@ game_loop:
 	; handle special-case forground logic
 	;====================================
 
+
+	; handle marker switch drawing
+	jsr	draw_marker_switch
+
+
 	; handle gear opening
 
 	lda	GEAR_OPEN
@@ -85,34 +93,40 @@ game_loop:
 
 	jsr	check_gear_delete
 not_gear_related:
+	; handle pillars
+	lda	LOCATION
+	cmp	#MIST_PILLAR_EYE
+	bcc	check_if_compartment_open
+
+	jsr	draw_pillar
+
+	jmp	nothing_special
+
+	; handle white page
+check_if_compartment_open:
+	cmp	#MIST_DOCK_SWITCH
+	bne	check_if_clock
+
+	jsr	draw_white_page
+
+	jmp	nothing_special
 
 	; handle clock puzzles
-
-	lda	LOCATION
+check_if_clock:
 	cmp	#MIST_CLOCK_PUZZLE	; clock puzzle
 	beq	location_clock
+	cmp	#MIST_CLOCK
+	beq	location_clock
+
 	cmp	#MIST_CLOCK_INSIDE
 	beq	location_inside_clock
-	bne	location_generator
+	bne	nothing_special
 
 location_clock:
 	jsr	draw_clock_face
 	jmp	nothing_special
 location_inside_clock:
 	jsr	draw_clock_inside
-	jmp	nothing_special
-
-	; handle generator puzzle
-location_generator:
-	cmp	#MIST_GENERATOR_ROOM
-	bne	nothing_special
-	lda	DIRECTION
-	and	#$f
-	cmp	#DIRECTION_N
-	bne	nothing_special
-
-	jsr	generator_update_volts
-	jsr	generator_draw_buttons
 	jmp	nothing_special
 
 nothing_special:
@@ -128,6 +142,14 @@ nothing_special:
 	;====================================
 
 	jsr	page_flip
+
+
+	;=================
+	; do this here (which is inefficient) because
+	; it lets the switch turn green before the noise
+
+	jsr	check_change_ship
+
 
 	;====================================
 	; handle keypress/joystick
@@ -151,6 +173,7 @@ room_frame_no_oflo:
 
 	lda	LEVEL_OVER
 	bne	really_exit
+
 	jmp	game_loop
 
 really_exit:
@@ -189,28 +212,16 @@ leave_tower2:
 
 	rts
 
-leave_tower1:
-	lda	#MIST_TOWER1_TOP
+
+goto_dentist_steps:
+
+	lda	#MIST_STEPS_DENTIST
 	sta	LOCATION
 
-	lda	#DIRECTION_E
+	lda	#DIRECTION_N
 	sta	DIRECTION
 
-	jsr	change_location
-
-	rts
-
-
-green_house:
-
-	; FIXME: handle switch separately
-
-	lda	#MIST_GREEN_SHACK
-	sta	LOCATION
-
-	jsr	change_location
-
-	rts
+	jmp	change_location
 
 
 enter_octagon:
@@ -223,9 +234,20 @@ enter_octagon:
 
 	jmp	set_level_over
 
+goto_dentist:
+
+	lda	#DENTIST_OUTSIDE
+	sta	LOCATION
+
+	lda	#LOAD_DENTIST
+	sta	WHICH_LOAD
+
+	jmp	set_level_over
+
+
 enter_viewer:
 
-	lda	#VIEWER_STEPS
+	lda	#VIEWER_ENTRANCE
 	sta	LOCATION
 
 	lda	#LOAD_VIEWER
@@ -260,13 +282,13 @@ enter_channel_clock:
 	jmp	set_level_over
 
 enter_stoneyship:
-	lda	#STONEY_SHIP_STERN
+	lda	#SHIP_STERN
 	sta	LOCATION
 
 	lda	#DIRECTION_N
 	sta	DIRECTION
 
-	lda	#LOAD_STONEY
+	lda	#LOAD_SHIP
 	sta	WHICH_LOAD
 
 set_level_over:
@@ -275,27 +297,62 @@ set_level_over:
 
 	rts
 
+	;===========================
+	; read letter from catherine
+
+read_letter:
+
+	lda	#MIST_CAT_LETTER
+	sta	LOCATION
+
+	lda	#DIRECTION_N
+	sta	DIRECTION
+
+	jsr	change_location
+
+	bit	SET_TEXT
+
+	rts
+
+	;===========================
+	; marker switch clicks
+click_switch_gear:
+	lda	#MARKER_GEARS
+	jmp	click_marker_switch
+click_switch_spaceship:
+	lda	#MARKER_SPACESHIP
+	jmp	click_marker_switch
+click_switch_clock:
+	lda	#MARKER_CLOCK
+	jmp	click_marker_switch
+
+	; also handle white page
+click_switch_dock:
+
+	lda	CURSOR_Y
+	cmp	#33
+	bcc	flip_dock_switch
+
+	; pick up white page
+
+	lda	COMPARTMENT_OPEN
+	bne	grab_it
+
+	rts
+
+grab_it:
+
+	jmp	grab_white_page
+
+
+flip_dock_switch:
+	lda	#MARKER_DOCK
+	jmp	click_marker_switch
+
 
 	;==========================
 	; includes
 	;==========================
-
-.if 0
-	.include	"gr_copy.s"
-	.include	"gr_offsets.s"
-	.include	"gr_pageflip.s"
-	.include	"gr_putsprite_crop.s"
-	.include	"text_print.s"
-	.include	"gr_fast_clear.s"
-	.include	"decompress_fast_v2.s"
-	.include	"keyboard.s"
-	.include	"draw_pointer.s"
-	.include	"audio.s"
-	.include	"end_level.s"
-
-	.include	"common_sprites.inc"
-.endif
-
 
 	; graphics data
 	.include	"graphics_mist/mist_graphics.inc"
@@ -303,19 +360,11 @@ set_level_over:
 	; puzzles
 	.include	"clock_bridge_puzzle.s"
 	.include	"marker_switch.s"
-	.include	"generator_puzzle.s"
+	.include	"mist_puzzles.s"
 
-	; linking books
+	.include	"handle_pages.s"
 
-	; letters
-	.include	"letter_cat.s"
+	.include	"simple_sounds.s"
 
 	; level data
 	.include	"leveldata_mist.inc"
-
-;.align $100
-;audio_red_page:
-;.incbin "audio/red_page.btc"
-
-
-

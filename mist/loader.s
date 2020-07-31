@@ -49,6 +49,7 @@ filbuf  = $3D6  ; filbuf:	.res 4			;	= bit2tbl+86
 	;===================================================
 
 loader_start:
+
 	lda	#LOAD_TITLE
 	sta	WHICH_LOAD
 
@@ -62,6 +63,13 @@ loader_start:
 	;===================================================
 
 which_load_loop:
+	lda	WHICH_LOAD
+
+	; update the which-file error message
+	tay
+	lda	which_disk,Y
+	sta	error_string+19
+
 	lda	WHICH_LOAD
 	asl
 
@@ -144,7 +152,26 @@ filenames:
 	.word intro_filename
 	.word mist_filename,meche_filename,selena_filename,octagon_filename
 	.word viewer_filename,stoney_filename,channel_filename,cabin_filename
-	.word dentist_filename,arbor_filename,shipup_filename,ending_filename
+	.word dentist_filename,arbor_filename,nibel_filename,ship_filename
+	.word generator_filename,dni_filename,sub_filename
+
+which_disk:
+	.byte '1'		; MIST_TITLE
+	.byte '1'		; MIST
+	.byte '3'		; MECHE
+	.byte '3'		; SELENA
+	.byte '1'		; OCTAGON
+	.byte '1'		; VIEWER
+	.byte '3'		; STONEY
+	.byte '2'		; CHANNEL
+	.byte '2'		; CABIN
+	.byte '1'		; DENTIST
+	.byte '2'		; ARBOR
+	.byte '2'		; NIBEL
+	.byte '1'		; SHIP
+	.byte '3'		; GENERATOR
+	.byte '1'		; D'NI
+	.byte '3'		; SUB
 
 intro_filename:
 	.byte "MIST_TITLE",0
@@ -168,10 +195,16 @@ dentist_filename:
 	.byte "DENTIST",0
 arbor_filename:
 	.byte "ARBOR",0
-shipup_filename:
-	.byte "SHIPUP",0
-ending_filename:
-	.byte "ENDING",0
+nibel_filename:
+	.byte "NIBEL",0
+ship_filename:
+	.byte "SHIP",0
+generator_filename:
+	.byte "GENERATOR",0
+dni_filename:
+	.byte "D'NI",0
+sub_filename:
+	.byte "SUB",0
 
 
 	;===================================================
@@ -267,9 +300,9 @@ mlsmc07:lda	$c0e8		; turn off drive motor?
 
 	ldy	#0
 
-	lda	#<disk_string
+	lda	#<error_string
 	sta	OUTL
-	lda	#>disk_string
+	lda	#>error_string
 	sta	OUTH
 
 quick_print:
@@ -291,8 +324,9 @@ fnf_keypress:
 
 	jmp	which_load_loop
 
-disk_string:
-.byte "INSERT OTHER DISK, PRESS RETURN",0
+; offset for disk number is 19
+error_string:
+.byte "PLEASE INSERT DISK 1, PRESS RETURN",0
 
 
 
@@ -712,10 +746,12 @@ sectbl:	.byte $00,$0d,$0b,$09,$07,$05,$03,$01,$0e,$0c,$0a,$08,$06,$04,$02,$0f
 ;filbuf:		.res 4			;	= bit2tbl+86
 					;dataend         = filbuf+4
 
+	.include	"qkumba_popwr.s"
 
 
 
         .include        "audio.s"
+	.include	"linking_noise.s"
         .include        "decompress_fast_v2.s"
         .include        "draw_pointer.s"
         .include        "end_level.s"
@@ -728,8 +764,8 @@ sectbl:	.byte $00,$0d,$0b,$09,$07,$05,$03,$01,$0e,$0c,$0a,$08,$06,$04,$02,$0f
         .include        "text_print.s"
 	.include	"loadstore.s"
 
-	.include        "common_sprites.inc"
         .include        "page_sprites.inc"
+	.include        "common_sprites.inc"
 
 loader_end:
 

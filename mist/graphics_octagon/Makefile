@@ -14,15 +14,16 @@ octagon_graphics.inc:	\
 	temple_door_closed_s.lzsa temple_door_closed_n.lzsa \
 	temple_center_n.lzsa temple_center_s.lzsa temple_center_e.lzsa \
 	temple_center_w.lzsa temple_center_up.lzsa \
+	temple_center_exploded_e.lzsa temple_center_exploded_w.lzsa \
 	temple_center_open_n.lzsa temple_center_closed_s.lzsa \
-	red_book_shelf.lzsa \
+	red_book_shelf.lzsa red_book_shelf_exploded.lzsa \
 	red_book_open.lzsa red_book_closed.lzsa \
 	blue_book_open.lzsa blue_book_closed.lzsa \
 	fireplace_e.lzsa \
-	in_fireplace_w.lzsa in_fireplace_door.lzsa \
+	in_fireplace_w.lzsa in_fireplace_door.lzsa in_fireplace_exploded_w.lzsa \
 	frame_door_open.lzsa \
 	frame_bookcase_open.lzsa \
-	blue_book_shelf.lzsa \
+	blue_book_shelf.lzsa blue_book_shelf_exploded.lzsa \
 	bookshelf_n.lzsa bookshelf_open_n.lzsa \
 	bookshelf_close_n.lzsa \
 	map.lzsa tower_rotation.lzsa \
@@ -49,7 +50,9 @@ octagon_graphics.inc:	\
 	tower_key_view_gears_hint_n.lzsa tower_key_view_tree_hint_n.lzsa \
 	elevator_door_closed_s.lzsa \
 	elevator_dark_s.lzsa \
-	red_book_ending.lzsa blue_book_ending.lzsa
+	red_book_ending.lzsa blue_book_ending.lzsa \
+	fireplace_shelf.lzsa \
+	green_book.lzsa green_book_open.lzsa
 	echo "temple_door_n_lzsa: .incbin \"temple_door_n.lzsa\"" > octagon_graphics.inc
 	echo "temple_door_s_lzsa: .incbin \"temple_door_s.lzsa\"" >> octagon_graphics.inc
 	echo "temple_door_closed_s_lzsa: .incbin \"temple_door_closed_s.lzsa\"" >> octagon_graphics.inc
@@ -58,18 +61,23 @@ octagon_graphics.inc:	\
 	echo "temple_center_s_lzsa: .incbin \"temple_center_s.lzsa\"" >> octagon_graphics.inc
 	echo "temple_center_e_lzsa: .incbin \"temple_center_e.lzsa\"" >> octagon_graphics.inc
 	echo "temple_center_w_lzsa: .incbin \"temple_center_w.lzsa\"" >> octagon_graphics.inc
+	echo "temple_center_exploded_e_lzsa: .incbin \"temple_center_exploded_e.lzsa\"" >> octagon_graphics.inc
+	echo "temple_center_exploded_w_lzsa: .incbin \"temple_center_exploded_w.lzsa\"" >> octagon_graphics.inc
 	echo "temple_center_open_n_lzsa: .incbin \"temple_center_open_n.lzsa\"" >> octagon_graphics.inc
 	echo "temple_center_closed_s_lzsa: .incbin \"temple_center_closed_s.lzsa\"" >> octagon_graphics.inc
 	echo "temple_center_up_lzsa: .incbin \"temple_center_up.lzsa\"" >> octagon_graphics.inc
 	echo "red_book_open_lzsa: .incbin \"red_book_open.lzsa\"" >> octagon_graphics.inc
 	echo "red_book_closed_lzsa: .incbin \"red_book_closed.lzsa\"" >> octagon_graphics.inc
 	echo "red_book_shelf_lzsa: .incbin \"red_book_shelf.lzsa\"" >> octagon_graphics.inc
+	echo "red_book_shelf_exploded_lzsa: .incbin \"red_book_shelf_exploded.lzsa\"" >> octagon_graphics.inc
 	echo "fireplace_e_lzsa: .incbin \"fireplace_e.lzsa\"" >> octagon_graphics.inc
 	echo "in_fireplace_w_lzsa: .incbin \"in_fireplace_w.lzsa\"" >> octagon_graphics.inc
+	echo "in_fireplace_exploded_w_lzsa: .incbin \"in_fireplace_exploded_w.lzsa\"" >> octagon_graphics.inc
 	echo "in_fireplace_door_lzsa: .incbin \"in_fireplace_door.lzsa\"" >> octagon_graphics.inc
 	echo "frame_door_open_lzsa: .incbin \"frame_door_open.lzsa\"" >> octagon_graphics.inc
 	echo "frame_bookcase_open_lzsa: .incbin \"frame_bookcase_open.lzsa\"" >> octagon_graphics.inc
 	echo "blue_book_shelf_lzsa: .incbin \"blue_book_shelf.lzsa\"" >> octagon_graphics.inc
+	echo "blue_book_shelf_exploded_lzsa: .incbin \"blue_book_shelf_exploded.lzsa\"" >> octagon_graphics.inc
 	echo "blue_book_open_lzsa: .incbin \"blue_book_open.lzsa\"" >> octagon_graphics.inc
 	echo "blue_book_closed_lzsa: .incbin \"blue_book_closed.lzsa\"" >> octagon_graphics.inc
 	echo "bookshelf_n_lzsa: .incbin \"bookshelf_n.lzsa\"" >> octagon_graphics.inc
@@ -121,6 +129,9 @@ octagon_graphics.inc:	\
 	echo "elevator_dark_s_lzsa: .incbin \"elevator_dark_s.lzsa\"" >> octagon_graphics.inc
 	echo "red_book_ending_lzsa: .incbin \"red_book_ending.lzsa\"" >> octagon_graphics.inc
 	echo "blue_book_ending_lzsa: .incbin \"blue_book_ending.lzsa\"" >> octagon_graphics.inc
+	echo "fireplace_shelf_lzsa: .incbin \"fireplace_shelf.lzsa\"" >> octagon_graphics.inc
+	echo "green_book_lzsa: .incbin \"green_book.lzsa\"" >> octagon_graphics.inc
+	echo "green_book_open_lzsa: .incbin \"green_book_open.lzsa\"" >> octagon_graphics.inc
 
 %.gr: %.png
 	$(PNG2GR) $< $@

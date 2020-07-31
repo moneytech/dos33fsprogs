@@ -260,29 +260,17 @@ draw_blue_page:
 no_draw_page:
 	rts
 
+meche_take_red_page:
+	lda	#MECHE_PAGE
+	jmp	take_red_page
 
+meche_take_blue_page:
+	lda	#MECHE_PAGE
+	jmp	take_blue_page
 
 	;==========================
 	; includes
 	;==========================
-
-.if 0
-	.include	"gr_copy.s"
-	.include	"gr_offsets.s"
-	.include	"gr_pageflip.s"
-	.include	"gr_putsprite_crop.s"
-	.include	"text_print.s"
-	.include	"gr_fast_clear.s"
-	.include	"decompress_fast_v2.s"
-	.include	"keyboard.s"
-	.include	"draw_pointer.s"
-	.include	"end_level.s"
-	.include	"audio.s"
-
-	.include	"common_sprites.inc"
-	.include	"page_sprites.inc"
-
-.endif
 
 	; puzzles
 
@@ -292,10 +280,14 @@ no_draw_page:
 
 	.include	"graphics_meche/meche_graphics.inc"
 
+	; sound
+	.include	"simple_sounds.s"
+
 	; linking books
 
 	.include	"link_book_meche.s"
 	.include	"link_book_mist.s"
+	.include	"handle_pages.s"
 
 	; level data
 

@@ -17,7 +17,26 @@ arbor_graphics.inc:	\
 	shack1_n.lzsa shack1_s.lzsa shack1_e.lzsa shack1_w.lzsa \
 	bridge3_e.lzsa bridge3_w.lzsa \
 	longshack1_e.lzsa longshack1_w.lzsa \
-	longshack2_e.lzsa longshack2_w.lzsa longshack2_n.lzsa longshack2_s.lzsa
+	longshack2_e.lzsa longshack2_w.lzsa longshack2_n.lzsa longshack2_s.lzsa \
+	switch_bridge1_n.lzsa switch_bridge1_s.lzsa \
+	switch_hut1_n.lzsa switch_hut1_e.lzsa \
+	switch_bridge2_e.lzsa switch_bridge2_w.lzsa \
+	switch_hut_w.lzsa switch_hut_closed_s.lzsa switch_hut_open_s.lzsa \
+	bridge4_e.lzsa bridge4_w.lzsa \
+	hut2_e.lzsa hut2_w.lzsa \
+	hut2_inside_w.lzsa hut2_inside_s.lzsa \
+	bridge5_n.lzsa bridge5_s.lzsa \
+	longshack3_n.lzsa longshack3_s.lzsa \
+	bridge6_n.lzsa bridge6_s.lzsa \
+	shack2_n.lzsa shack2_s.lzsa shack2_e.lzsa shack2_w.lzsa \
+	bridge7_e.lzsa bridge7_open_w.lzsa bridge7_closed_w.lzsa \
+	doors_e.lzsa doors_closed_w.lzsa doors_open_w.lzsa \
+	doors_elev2_open_w.lzsa doors_open_elev2_closed_w.lzsa \
+	inside_elevator2_open.lzsa inside_elevator2_closed.lzsa \
+	steps_top_e.lzsa steps_top_w.lzsa \
+	steps1_e.lzsa steps1_w.lzsa \
+	steps2_e.lzsa steps2_w.lzsa \
+	steps_bottom_e.lzsa steps_bottom_open_w.lzsa steps_bottom_closed_w.lzsa
 	echo "arrival_e_lzsa: .incbin \"arrival_e.lzsa\"" > arbor_graphics.inc
 	echo "arrival_open_e_lzsa: .incbin \"arrival_open_e.lzsa\"" >> arbor_graphics.inc
 	echo "arrival_w_lzsa: .incbin \"arrival_w.lzsa\"" >> arbor_graphics.inc
@@ -41,6 +60,50 @@ arbor_graphics.inc:	\
 	echo "longshack2_w_lzsa: .incbin \"longshack2_w.lzsa\"" >> arbor_graphics.inc
 	echo "longshack2_n_lzsa: .incbin \"longshack2_n.lzsa\"" >> arbor_graphics.inc
 	echo "longshack2_s_lzsa: .incbin \"longshack2_s.lzsa\"" >> arbor_graphics.inc
+	echo "switch_bridge1_n_lzsa: .incbin \"switch_bridge1_n.lzsa\"" >> arbor_graphics.inc
+	echo "switch_bridge1_s_lzsa: .incbin \"switch_bridge1_s.lzsa\"" >> arbor_graphics.inc
+	echo "switch_hut1_n_lzsa: .incbin \"switch_hut1_n.lzsa\"" >> arbor_graphics.inc
+	echo "switch_hut1_e_lzsa: .incbin \"switch_hut1_e.lzsa\"" >> arbor_graphics.inc
+	echo "switch_bridge2_e_lzsa: .incbin \"switch_bridge2_e.lzsa\"" >> arbor_graphics.inc
+	echo "switch_bridge2_w_lzsa: .incbin \"switch_bridge2_w.lzsa\"" >> arbor_graphics.inc
+	echo "switch_hut_w_lzsa: .incbin \"switch_hut_w.lzsa\"" >> arbor_graphics.inc
+	echo "switch_hut_closed_s_lzsa: .incbin \"switch_hut_closed_s.lzsa\"" >> arbor_graphics.inc
+	echo "switch_hut_open_s_lzsa: .incbin \"switch_hut_open_s.lzsa\"" >> arbor_graphics.inc
+	echo "bridge4_e_lzsa: .incbin \"bridge4_e.lzsa\"" >> arbor_graphics.inc
+	echo "bridge4_w_lzsa: .incbin \"bridge4_w.lzsa\"" >> arbor_graphics.inc
+	echo "hut2_e_lzsa: .incbin \"hut2_e.lzsa\"" >> arbor_graphics.inc
+	echo "hut2_w_lzsa: .incbin \"hut2_w.lzsa\"" >> arbor_graphics.inc
+	echo "hut2_inside_w_lzsa: .incbin \"hut2_inside_w.lzsa\"" >> arbor_graphics.inc
+	echo "hut2_inside_s_lzsa: .incbin \"hut2_inside_s.lzsa\"" >> arbor_graphics.inc
+	echo "bridge5_n_lzsa: .incbin \"bridge5_n.lzsa\"" >> arbor_graphics.inc
+	echo "bridge5_s_lzsa: .incbin \"bridge5_s.lzsa\"" >> arbor_graphics.inc
+	echo "longshack3_n_lzsa: .incbin \"longshack3_n.lzsa\"" >> arbor_graphics.inc
+	echo "longshack3_s_lzsa: .incbin \"longshack3_s.lzsa\"" >> arbor_graphics.inc
+	echo "bridge6_n_lzsa: .incbin \"bridge6_n.lzsa\"" >> arbor_graphics.inc
+	echo "bridge6_s_lzsa: .incbin \"bridge6_s.lzsa\"" >> arbor_graphics.inc
+	echo "shack2_n_lzsa: .incbin \"shack2_n.lzsa\"" >> arbor_graphics.inc
+	echo "shack2_s_lzsa: .incbin \"shack2_s.lzsa\"" >> arbor_graphics.inc
+	echo "shack2_e_lzsa: .incbin \"shack2_e.lzsa\"" >> arbor_graphics.inc
+	echo "shack2_w_lzsa: .incbin \"shack2_w.lzsa\"" >> arbor_graphics.inc
+	echo "bridge7_e_lzsa: .incbin \"bridge7_e.lzsa\"" >> arbor_graphics.inc
+	echo "bridge7_closed_w_lzsa: .incbin \"bridge7_closed_w.lzsa\"" >> arbor_graphics.inc
+	echo "bridge7_open_w_lzsa: .incbin \"bridge7_open_w.lzsa\"" >> arbor_graphics.inc
+	echo "doors_e_lzsa: .incbin \"doors_e.lzsa\"" >> arbor_graphics.inc
+	echo "doors_closed_w_lzsa: .incbin \"doors_closed_w.lzsa\"" >> arbor_graphics.inc
+	echo "doors_open_w_lzsa: .incbin \"doors_open_w.lzsa\"" >> arbor_graphics.inc
+	echo "doors_elev2_open_w_lzsa: .incbin \"doors_elev2_open_w.lzsa\"" >> arbor_graphics.inc
+	echo "doors_open_elev2_closed_w_lzsa: .incbin \"doors_open_elev2_closed_w.lzsa\"" >> arbor_graphics.inc
+	echo "inside_elevator2_open_lzsa: .incbin \"inside_elevator2_open.lzsa\"" >> arbor_graphics.inc
+	echo "inside_elevator2_closed_lzsa: .incbin \"inside_elevator2_closed.lzsa\"" >> arbor_graphics.inc
+	echo "steps_top_e_lzsa: .incbin \"steps_top_e.lzsa\"" >> arbor_graphics.inc
+	echo "steps_top_w_lzsa: .incbin \"steps_top_w.lzsa\"" >> arbor_graphics.inc
+	echo "steps1_w_lzsa: .incbin \"steps1_w.lzsa\"" >> arbor_graphics.inc
+	echo "steps1_e_lzsa: .incbin \"steps1_e.lzsa\"" >> arbor_graphics.inc
+	echo "steps2_w_lzsa: .incbin \"steps2_w.lzsa\"" >> arbor_graphics.inc
+	echo "steps2_e_lzsa: .incbin \"steps2_e.lzsa\"" >> arbor_graphics.inc
+	echo "steps_bottom_e_lzsa: .incbin \"steps_bottom_e.lzsa\"" >> arbor_graphics.inc
+	echo "steps_bottom_open_w_lzsa: .incbin \"steps_bottom_open_w.lzsa\"" >> arbor_graphics.inc
+	echo "steps_bottom_closed_w_lzsa: .incbin \"steps_bottom_closed_w.lzsa\"" >> arbor_graphics.inc
 
 %.gr: %.png
 	$(PNG2GR) $< $@
@@ -51,4 +114,4 @@ arbor_graphics.inc:	\
 ####
 
 clean:		
-		rm -f *~ *.o *.lst *.gr *.lzsa channel_graphics.inc
+		rm -f *~ *.o *.lst *.gr *.lzsa arbor_graphics.inc

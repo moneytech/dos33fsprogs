@@ -1,24 +1,35 @@
 For release 1.0
+
 + LOADER 
-	-- better loader
-	-- save/load games
-	-- sound loader
-+ MIST (split off ship-up/ship-down?)
-	-- fix catherine letter (bg, grab from other side)
-	-- constellation puzzle/ship raising
-	-- marker switches
-+ DENTIST
-	-- all of it
-+ CABIN (split off?)
-	-- safe puzzle
-	-- boiler
-	-- up/down in tree
+	-- save game
+	-- joystick support
+
++ MIST
+	-- open door to clock puzzle?
+	-- only allow entering ship if it's up
+	-- another stop on path to spaceship.  Out of room though :(
+	-- MIST_ROCKET_PATH_PAD probably missing ship-raised background
+
 + OCTAGON
-	-- code book
-	-- ending
+	-- load "red page" sound into LC and play it?
+
 + SELENA
+	-- new locations
+		- chasm east
+		- water pool
+		- water path2 n/s
+		- chasm path2 n/s?
+		- crystal path2 n/s?
+		- tunnel lights 1/2/3
+		- submarine message
+		- near book n/s
+
+	-- maybe another location on dock to ship
 	-- sounds/door puzzle
+	-- load 1s clip of sounds (4k each) into language card?
 	-- have sub background change
+	-- enable turning on lights
+	-- flame trench has left/right mixed, left view missing
 
 + STONEY
 	-- hook up compass rose
@@ -27,50 +38,51 @@ For release 1.0
 	-- hook up key/trunk puzzle
 
 + CHANNEL
-	-- hook up water valves at least
-	-- hook up stairway and elevator1
+	-- from path can still see down elev1 even if up
+	-- rotate windmill if enabled?
 
 + ARBOR
-	-- all of it
+	-- rotate windmill if enabled?
+
++ NIBEL
+	-- turn on sprite crop in the viewer part
+
++ MECHE
+	-- animations for elevator
+	-- way to click on end puzzle from other angle
+	-- way to turn around in basement
 
 Done:
-+ MECHE
++ CABIN
++ DENTIST
++ DNI
 + MIST_TITLE
++ SHIP
 + VIEWER
 
 ================================
+TODO Maybe future:
 
-main:
+MIST:
 + some sort of switch animation on circuit breakers?
-+ marker switches
-+ ship raise/lower
 + look at catherine's letter from other side of path
-+ allow opening/grabbing white page
++ Make clock puzzle more similar to actual game
 
-octagon_room:
-+ fireplace book
+OCTAGON:
 + in tower could have extra window open/closed far backgrounds
 + turning when looking at hint loses the text mode
-+ final puzzle in fireplace
 + line drawing on map isn't optimal
 + should hints be black on white text?
 
 General:
 + Insert floppy #100 joke?
 + double link noise (once when leave, once when get there?)
-+ adjust grab window on letter
-+ add missing red book step
-
-dentist office:
-+ implement
-
-ending:
-+ all endings
-+ Fireplace: 8x6 grid
++ can drop pages back where we picked them up
+	not too hard to implement?
 
 MECHE age:
 + can poke around more stuff in their rooms
-+ reduce size by using flipped-background attribute
++ reduce size by using flipped-background attribute(?)
 
 SELENA age:
 + optional mockingboard sound for keyboard?
@@ -85,11 +97,6 @@ SELENA age:
 + better colors
 
 Channelwood:
-+ Implement safe
-+ Implement tree
-+ Implement boiler
-+ Implement water valves
-+ Enable linking back to Myst
 + Windmill animation
 + Switch flip animation
 + Open faucet animation
@@ -98,7 +105,7 @@ Channelwood:
 + Animation for book elevator
 + Animation for level1 elevator
 + Animation for level2 elevator
-+ Background soud effects
++ Background sound effects
 
 
 Stoneship age:
@@ -106,12 +113,18 @@ Stoneship age:
 + Implement compass rose light puzzle
 + Implement raising/lowering water
 + Implement telescope
-+ Implement the half-letter
 + Hook up tunnels into compass room properly
++ Spheres in red room play animations
 
 Ending:
-+ Turning
-+ Allow looking at green book on shelf
 + Atrus at end -- hires?
-+ Marker Switches (8):
+
+VIEWER
++ ?
+
+CABIN
++ Make match go out gradually when leave
++ Make boiler puzzle a bit closer to actual (it has a warm up
+	time in the real game)
++ Allow looking down from whole ride up the tree, not just at top
 

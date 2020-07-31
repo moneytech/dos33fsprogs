@@ -32,6 +32,7 @@ selena_start:
 
 	lda	#0
 	sta	DRAW_PAGE
+	sta	LEVEL_OVER
 
 	; init cursor
 
@@ -41,6 +42,11 @@ selena_start:
 
 	;=================
 	; init vars
+
+
+	; update the light background
+
+	jsr	update_tunnel_lights
 
 	; copy in rocket note puzzle state
 	lda	ROCKET_NOTE1
@@ -54,33 +60,15 @@ selena_start:
 
 	; hook up the special functions
 	; these might be disabled if we've been here before
+	; FIXME: this means we cannot save game inside spaceship on selena
 
 	ldy	#LOCATION_SPECIAL_EXIT
-	lda	#DIRECTION_E
-	sta	location1,Y	; enable controls
-	lda	#DIRECTION_W
-	sta	location2,Y     ; enable organ
-	lda	#DIRECTION_N
-	sta	location0,Y     ; enable mist exit
-
-	lda	#0
-	sta	LEVEL_OVER
-
-.if 1
-	lda	#SELENA_INSIDE_SHIP
-	sta	LOCATION
-
-	lda	#DIRECTION_E
-	sta	DIRECTION
-.else
-
-	lda	#SELENA_WALKWAY1
-	sta	LOCATION
-
-	lda	#DIRECTION_N
-	sta	DIRECTION
-
-.endif
+	lda	#DIRECTION_E	; enable controls
+	sta	location1,Y	; SELENA_CONTROLS
+	lda	#DIRECTION_W	; enable organ
+	sta	location2,Y	; SELENA_ELECTRIC_ORGAN
+	lda	#DIRECTION_N	; enable mist exit
+	sta	location0,Y     ; SELENA_INSIDE_SHIP
 
 	; set up initial location
 
@@ -114,53 +102,37 @@ game_loop:
 	;====================================
 
 	lda	LOCATION
+
 	cmp	#SELENA_CONTROLS
 	beq	controls_animation
-	cmp	#SELENA_BOOK_OPEN
-	beq	mist_book_animation
+
+	cmp	#SELENA_BUNKER_KEYPAD
+	beq	fg_draw_door_controls
+
 	cmp	#SELENA_WATER
-	beq	fg_draw_blue_page
+	beq	fg_draw_blue_page	; and water note
+
 	cmp	#SELENA_CRYSTAL_CLOSE
 	beq	fg_draw_red_page
 
+	cmp	#SELENA_ANTENNA_CLOSE
+	beq	fg_draw_antenna_panel
+
+	cmp	#SELENA_CHASM
+	beq	fg_draw_chasm_note
+
+	cmp	#SELENA_CLOCK_CLOSE
+	beq	fg_draw_clock_note
+
+	cmp	#SELENA_TUNNEL_MAIN_CLOSE
+	beq	fg_draw_tunnel_note
+
+
 	jmp	nothing_special
 
-mist_book_animation:
-
-	; handle animated linking book
-
-	lda	ANIMATE_FRAME
-	cmp	#6
-	bcc	mist_book_good			; blt
-
-	lda	#0
-	sta	ANIMATE_FRAME
-
-mist_book_good:
-
-	asl
-	tay
-	lda	mist_movie,Y
-	sta	INL
-	lda	mist_movie+1,Y
-	sta	INH
-
-	lda	#24
-	sta	XPOS
-	lda	#12
-	sta	YPOS
-
-	jsr	put_sprite_crop
-
-	lda	FRAMEL
-	and	#$f
-	bne	done_animate_mist_book
-
-	inc	ANIMATE_FRAME
-
-done_animate_mist_book:
+fg_draw_door_controls:
+	jsr	door_draw_buttons
 	jmp	nothing_special
-
 
 controls_animation:
 
@@ -224,6 +196,27 @@ fg_draw_red_page:
         jsr     draw_red_page
         jmp     nothing_special
 
+fg_draw_antenna_panel:
+	jsr	draw_antenna_panel
+	jmp	nothing_special
+
+fg_draw_water_note:
+	jsr	draw_water_background
+	jmp	nothing_special
+
+fg_draw_chasm_note:
+	jsr	draw_chasm_background
+	jmp	nothing_special
+
+fg_draw_clock_note:
+	jsr	draw_clock_background
+	jmp	nothing_special
+
+fg_draw_tunnel_note:
+	jsr	draw_tunnel_background
+	jmp	nothing_special
+
+
 nothing_special:
 
 	;====================================
@@ -266,6 +259,10 @@ really_exit:
 	jmp	end_level
 
 
+	;===================================
+	; back to mist
+	;	from rocket
+	;===================================
 back_to_mist:
 	lda	#$ff
 	sta	LEVEL_OVER
@@ -282,6 +279,27 @@ back_to_mist:
 
 	rts
 
+	;===================================
+	; goto sub
+	;===================================
+
+goto_sub:
+	lda	#$ff
+	sta	LEVEL_OVER
+
+	lda	#SUB_BUNKER_ENTRY	; inside bunker door
+	sta	LOCATION
+
+	lda	#DIRECTION_E
+	sta	DIRECTION
+
+	lda	#LOAD_SUB
+	sta	WHICH_LOAD
+
+	rts
+
+
+
 	; save rocket state
 save_rocket_state:
 	lda	rocket_notes
@@ -292,15 +310,32 @@ save_rocket_state:
 	sta	ROCKET_NOTE3
 	lda	rocket_notes+6
 	sta	ROCKET_NOTE4
-
+rocket_save_return:
 	rts
 
 
 selena_take_red_page:
+	lda	CURSOR_Y
+	cmp	#10
+	bcc	actually_take_red_page
+	cmp	#24
+	bcc	rocket_save_return
+	jmp	crystal_button_pressed
+
+actually_take_red_page:
 	lda	#SELENA_PAGE
 	jmp	take_red_page
 
 selena_take_blue_page:
+	lda	DIRECTION
+	and	#$f
+	cmp	#DIRECTION_W
+	bne	actually_take_blue_page
+
+	jmp	water_button_pressed
+
+actually_take_blue_page:
+
 	lda	#SELENA_PAGE
 	jmp	take_blue_page
 
@@ -308,13 +343,16 @@ selena_take_blue_page:
 	;=============================
 draw_red_page:
 
+	; first draw background
+	jsr	draw_crystal_background
+
 	lda	RED_PAGES_TAKEN
 	and	#SELENA_PAGE
 	bne	no_draw_page
 
-	lda	#20
+	lda	#18
 	sta     XPOS
-	lda	#2
+	lda	#0
 	sta	YPOS
 
 	lda	#<red_page_sprite
@@ -329,7 +367,12 @@ draw_blue_page:
 
 	lda	DIRECTION
 	cmp	#DIRECTION_S
+	beq	do_draw_blue_page
+	cmp	#DIRECTION_W
 	bne	no_draw_page
+	jmp	draw_water_background
+
+do_draw_blue_page:
 
 	lda	BLUE_PAGES_TAKEN
 	and	#SELENA_PAGE
@@ -349,6 +392,7 @@ draw_blue_page:
 
 no_draw_page:
         rts
+
 
 
 	;==============================
@@ -381,40 +425,23 @@ antenna_mid_down:
 
 	;==============================
 	; keypad actions
-keypad_press:
-	lda	#SELENA_BUNKER_OPEN
-	sta	LOCATION
-	jmp	change_location
+;keypad_press:
+;	lda	#SELENA_BUNKER_OPEN
+;	sta	LOCATION
+;	jmp	change_location
 
 	;==========================
 	; includes
 	;==========================
 
-.if 0
-	.include	"gr_copy.s"
-	.include	"gr_offsets.s"
-	.include	"gr_pageflip.s"
-	.include	"gr_putsprite_crop.s"
-	.include	"text_print.s"
-	.include	"gr_fast_clear.s"
-	.include	"decompress_fast_v2.s"
-	.include	"keyboard.s"
-	.include	"draw_pointer.s"
-	.include	"end_level.s"
-	.include	"audio.s"
-	.include	"common_sprites.inc"
-	.include	"page_sprites.inc"
-.endif
-
 	; level graphics
 	.include	"graphics_selena/selena_graphics.inc"
 
 	; puzzles
-	.include	"organ_puzzle.s"
-
+	.include	"selena_organ_puzzle.s"
+	.include	"selena_sound_puzzle.s"
 
 	; linking books
-	.include	"link_book_mist.s"
 
 	.include	"handle_pages.s"
 
@@ -423,11 +450,5 @@ keypad_press:
 
 	; sound
 	.include	"speaker_beeps.s"
-
-
-
-;.align $100
-;audio_link_noise:
-;.incbin "audio/link_noise.btc"
-
+	.include	"simple_sounds.s"
 
