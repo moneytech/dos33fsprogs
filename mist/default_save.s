@@ -23,6 +23,14 @@
 .byte MECHE_ARRIVAL	; LOCATION	=	$82
 .endif
 
+.if 1
+; MECHE
+.byte LOAD_MECHE	; WHICH_LOAD		= 	$80
+.byte DIRECTION_N	; DIRECTION		= 	$81
+.byte MECHE_NORTH_PLATFORM	; LOCATION	=	$82
+.endif
+
+
 .if 0
 ; CHANNEL
 .byte LOAD_CHANNEL	; WHICH_LOAD		= 	$80
@@ -37,11 +45,32 @@
 .byte OCTAGON_CENTER	; LOCATION	=	$82
 .endif
 
-.if 1
+.if 0
 ; Selena
 .byte LOAD_SELENA	; WHICH_LOAD		= 	$80
 .byte DIRECTION_N	; DIRECTION		= 	$81
 .byte SELENA_WALKWAY1	; LOCATION	=	$82
+.endif
+
+.if 0
+; Sub
+.byte LOAD_SUB		; WHICH_LOAD		= 	$80
+.byte DIRECTION_E	; DIRECTION		= 	$81
+.byte SUB_BUNKER_ENTRY	; LOCATION	=	$82
+.endif
+
+.if 0
+; Stoneship
+.byte LOAD_STONEY	; WHICH_LOAD		= 	$80
+.byte DIRECTION_E	; DIRECTION		= 	$81
+.byte STONEY_ARRIVAL	; LOCATION	=	$82
+.endif
+
+.if 0
+; NIBEL
+.byte LOAD_NIBEL	; WHICH_LOAD		= 	$80
+.byte DIRECTION_E	; DIRECTION		= 	$81
+.byte NIBEL_OUTSIDE_ELEV2_OPEN	; LOCATION	=	$82
 .endif
 
 
@@ -95,7 +124,7 @@
 		; stoneship
 .byte $00	; PUMP_STATE		=	$B0
 .byte $00	; BATTERY_CHARGE	=	$B1
-.byte $00	; COMPASS_ANGLE		=	$B2
+.byte $00	; COMPASS_STATE		=	$B2
 .byte $00	; CRANK_ANGLE		=	$B3
 .byte $00	; WHITE_PAGE_TAKEN	=	$B4
 .byte $00	; CHANNEL_SWITCHES	=	$B5
@@ -133,5 +162,8 @@
 .byte $00	; SELENA_LOCK4		=	$D3
 .byte $00	; SELENA_LOCK5		=	$D4
 .byte $00	; SELENA_ANTENNA_ACTIVE	=	$D5
-
+.byte $00	; SUB_DIRECTION		=	$D6
+.byte $00	; SUB_LOCATION		=	$D7
+.byte $00	; NIBEL_PROJECTOR	=	$D8
 .endif
+

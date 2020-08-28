@@ -43,9 +43,10 @@ meche_graphics.inc:	\
 	elevator_top_e.lzsa \
 	elevator_half_e.lzsa \
 	top_floor_e.lzsa \
+	top_floor_up_w.lzsa \
 	top_floor_ye_w.lzsa top_floor_ne_w.lzsa \
 	rotate_controls_e.lzsa \
-	eastturn_e.lzsa eastturn_w.lzsa \
+	eastturn_e.lzsa eastturn_w.lzsa eastturn_n.lzsa eastturn_s.lzsa \
 	east_arch_w.lzsa east_arch_s.lzsa \
 	east_hint_e.lzsa \
 	east_top_e.lzsa east_top_w.lzsa \
@@ -54,8 +55,19 @@ meche_graphics.inc:	\
 	book_stairs_n.lzsa book_stairs_s.lzsa \
 	book_room_n.lzsa \
 	book_open_n.lzsa book_closed_n.lzsa \
-	blue_secret_door_w.lzsa blue_secret_room_w.lzsa \
-	red_secret_door_s.lzsa red_secret_room_s.lzsa
+	blue_secret_door_w.lzsa \
+	blue_secret_room_n.lzsa blue_secret_room_s.lzsa blue_secret_room_e.lzsa blue_secret_room_w.lzsa \
+	blue_secret_room_jolt_n.lzsa \
+	red_secret_door_s.lzsa \
+	red_secret_room_n.lzsa red_secret_room_s.lzsa red_secret_room_e.lzsa red_secret_room_w.lzsa \
+	achenar_letter.lzsa \
+	east_path_e.lzsa east_path_w.lzsa \
+	east_steps_s.lzsa east_steps_n.lzsa \
+	east_landing_e.lzsa east_landing_w.lzsa \
+	north_close_n.lzsa north_close_s.lzsa \
+	red_throne_s.lzsa \
+	red_room_east_e.lzsa red_room_east_n.lzsa red_room_east_w.lzsa \
+	red_skeleton.lzsa red_no_skeleton.lzsa
 	echo "departure_e_lzsa: .incbin \"departure_e.lzsa\"" > meche_graphics.inc
 	echo "arrival_w_lzsa: .incbin \"arrival_w.lzsa\"" >> meche_graphics.inc
 	echo "entrance_e_lzsa: .incbin \"entrance_e.lzsa\"" >> meche_graphics.inc
@@ -125,11 +137,14 @@ meche_graphics.inc:	\
 	echo "elevator_half_e_lzsa: .incbin \"elevator_half_e.lzsa\"" >> meche_graphics.inc
 	echo "elevator_top_e_lzsa: .incbin \"elevator_top_e.lzsa\"" >> meche_graphics.inc
 	echo "top_floor_e_lzsa: .incbin \"top_floor_e.lzsa\"" >> meche_graphics.inc
+	echo "top_floor_up_w_lzsa: .incbin \"top_floor_up_w.lzsa\"" >> meche_graphics.inc
 	echo "top_floor_ye_w_lzsa: .incbin \"top_floor_ye_w.lzsa\"" >> meche_graphics.inc
 	echo "top_floor_ne_w_lzsa: .incbin \"top_floor_ne_w.lzsa\"" >> meche_graphics.inc
 	echo "rotate_controls_e_lzsa: .incbin \"rotate_controls_e.lzsa\"" >> meche_graphics.inc
 	echo "eastturn_e_lzsa: .incbin \"eastturn_e.lzsa\"" >> meche_graphics.inc
 	echo "eastturn_w_lzsa: .incbin \"eastturn_w.lzsa\"" >> meche_graphics.inc
+	echo "eastturn_n_lzsa: .incbin \"eastturn_n.lzsa\"" >> meche_graphics.inc
+	echo "eastturn_s_lzsa: .incbin \"eastturn_s.lzsa\"" >> meche_graphics.inc
 	echo "east_arch_w_lzsa: .incbin \"east_arch_w.lzsa\"" >> meche_graphics.inc
 	echo "east_arch_s_lzsa: .incbin \"east_arch_s.lzsa\"" >> meche_graphics.inc
 	echo "east_hint_e_lzsa: .incbin \"east_hint_e.lzsa\"" >> meche_graphics.inc
@@ -146,9 +161,30 @@ meche_graphics.inc:	\
 	echo "book_closed_n_lzsa: .incbin \"book_closed_n.lzsa\"" >> meche_graphics.inc
 	echo "blue_secret_door_w_lzsa: .incbin \"blue_secret_door_w.lzsa\"" >> meche_graphics.inc
 	echo "blue_secret_room_w_lzsa: .incbin \"blue_secret_room_w.lzsa\"" >> meche_graphics.inc
+	echo "blue_secret_room_jolt_n_lzsa: .incbin \"blue_secret_room_jolt_n.lzsa\"" >> meche_graphics.inc
+	echo "blue_secret_room_e_lzsa: .incbin \"blue_secret_room_e.lzsa\"" >> meche_graphics.inc
+	echo "blue_secret_room_n_lzsa: .incbin \"blue_secret_room_n.lzsa\"" >> meche_graphics.inc
+	echo "blue_secret_room_s_lzsa: .incbin \"blue_secret_room_s.lzsa\"" >> meche_graphics.inc
 	echo "red_secret_door_s_lzsa: .incbin \"red_secret_door_s.lzsa\"" >> meche_graphics.inc
+	echo "red_secret_room_n_lzsa: .incbin \"red_secret_room_n.lzsa\"" >> meche_graphics.inc
 	echo "red_secret_room_s_lzsa: .incbin \"red_secret_room_s.lzsa\"" >> meche_graphics.inc
-
+	echo "red_secret_room_e_lzsa: .incbin \"red_secret_room_e.lzsa\"" >> meche_graphics.inc
+	echo "red_secret_room_w_lzsa: .incbin \"red_secret_room_w.lzsa\"" >> meche_graphics.inc
+	echo "achenar_letter_lzsa: .incbin \"achenar_letter.lzsa\"" >> meche_graphics.inc
+	echo "east_path_e_lzsa: .incbin \"east_path_e.lzsa\"" >> meche_graphics.inc
+	echo "east_path_w_lzsa: .incbin \"east_path_w.lzsa\"" >> meche_graphics.inc
+	echo "east_steps_s_lzsa: .incbin \"east_steps_s.lzsa\"" >> meche_graphics.inc
+	echo "east_steps_n_lzsa: .incbin \"east_steps_n.lzsa\"" >> meche_graphics.inc
+	echo "east_landing_e_lzsa: .incbin \"east_landing_e.lzsa\"" >> meche_graphics.inc
+	echo "east_landing_w_lzsa: .incbin \"east_landing_w.lzsa\"" >> meche_graphics.inc
+	echo "north_close_s_lzsa: .incbin \"north_close_s.lzsa\"" >> meche_graphics.inc
+	echo "north_close_n_lzsa: .incbin \"north_close_n.lzsa\"" >> meche_graphics.inc
+	echo "red_throne_s_lzsa: .incbin \"red_throne_s.lzsa\"" >> meche_graphics.inc
+	echo "red_room_east_e_lzsa: .incbin \"red_room_east_e.lzsa\"" >> meche_graphics.inc
+	echo "red_room_east_n_lzsa: .incbin \"red_room_east_n.lzsa\"" >> meche_graphics.inc
+	echo "red_room_east_w_lzsa: .incbin \"red_room_east_w.lzsa\"" >> meche_graphics.inc
+	echo "red_skeleton_lzsa: .incbin \"red_skeleton.lzsa\"" >> meche_graphics.inc
+	echo "red_no_skeleton_lzsa: .incbin \"red_no_skeleton.lzsa\"" >> meche_graphics.inc
 
 
 

@@ -88,6 +88,8 @@ game_loop:
 	beq	fg_draw_blue_page
 	cmp	#MECHE_RED_SECRET_ROOM
 	beq	fg_draw_red_page
+	cmp	#MECHE_RED_ROOM_EAST
+	beq	fg_draw_crystals
 
 	jmp	nothing_special
 animate_meche_book:
@@ -177,6 +179,10 @@ fg_draw_blue_page:
 	jsr	draw_blue_page
 	jmp	nothing_special
 
+fg_draw_crystals:
+	jsr	draw_crystals
+	jmp	nothing_special
+
 nothing_special:
 
 	;====================================
@@ -222,6 +228,10 @@ really_exit:
 	;=============================
 draw_red_page:
 
+	lda	DIRECTION
+	cmp	#DIRECTION_N
+	bne	done_draw_red_page
+
 	lda	RED_PAGES_TAKEN
 	and	#MECHE_PAGE
 	bne	no_draw_page
@@ -237,9 +247,43 @@ draw_red_page:
 	sta	INH
 
 	jmp	put_sprite_crop		; tail call
+done_draw_red_page:
+	rts
 
+	;========================
+	; draw blue page
+	;========================
+	; also handle jolt
 
 draw_blue_page:
+	lda	DIRECTION
+	cmp	#DIRECTION_W
+	beq	actually_draw_blue_page
+
+	; else, jolting
+	lda	ANIMATE_FRAME
+	beq	not_done_jolt
+
+	lda	FRAMEL
+	and	#$f
+	bne	not_done_jolt
+
+	lda	#0
+	sta	ANIMATE_FRAME
+
+	ldy	#LOCATION_NORTH_BG
+	lda	#<blue_secret_room_n_lzsa
+	sta	location39,Y			; MECHE_BLUE_SECRET_ROOM
+	lda	#>blue_secret_room_n_lzsa
+	sta	location39+1,Y			; MECHE_BLUE_SECRET_ROOM
+
+	jsr	change_direction
+
+not_done_jolt:
+
+	rts
+
+actually_draw_blue_page:
 
 	lda	BLUE_PAGES_TAKEN
 	and	#MECHE_PAGE
@@ -260,11 +304,58 @@ draw_blue_page:
 no_draw_page:
 	rts
 
+	;==============================
+	; Take red page
+	;	or read achenar letter
+	;==============================
+
 meche_take_red_page:
+	lda	DIRECTION
+	cmp	#DIRECTION_N
+	beq	actually_take_red_page
+
+	; otherwise go to read letter
+
+	lda	#MECHE_ACHENAR_LETTER
+	sta	LOCATION
+	jsr	change_location
+
+	bit	SET_TEXT
+	rts
+
+
+actually_take_red_page:
 	lda	#MECHE_PAGE
 	jmp	take_red_page
 
+
+	;=============================
+	; Take blue page
+	;	or jolt the chair
+	;=============================
+
 meche_take_blue_page:
+	lda	DIRECTION
+	cmp	#DIRECTION_W
+	beq	actually_take_blue_page
+
+	; if not, jolt time
+	lda	#1
+	sta	ANIMATE_FRAME
+	lda	#0
+	sta	FRAMEL
+
+	ldy	#LOCATION_NORTH_BG
+	lda	#<blue_secret_room_jolt_n_lzsa
+	sta	location39,Y			; MECHE_BLUE_SECRET_ROOM
+	lda	#>blue_secret_room_jolt_n_lzsa
+	sta	location39+1,Y			; MECHE_BLUE_SECRET_ROOM
+
+	jmp	change_direction
+
+
+actually_take_blue_page:
+
 	lda	#MECHE_PAGE
 	jmp	take_blue_page
 

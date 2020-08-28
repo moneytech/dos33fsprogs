@@ -137,6 +137,10 @@ ROCKET_NOTE4	=	$A1		; organ (note slider 4)
 
 MECHE_ELEVATOR	=	$A2		; fortress elevator state
 MECHE_ROTATION	=	$A3		; fortress rotation state
+	; 0..3  = S
+	; 4..7  = E
+	; 8..11  = N
+	; 12..15 = W
 MECHE_LEVERS	=	$A4		; fortress rotation levers
 	LEFT_LEVER = 1
 	RIGHT_LEVER = 2
@@ -171,8 +175,14 @@ TOWER_ROTATION	=	$AE		; tower rotation: which
 SHIP_RAISED	=	$AF		; ship raised or not
 
 PUMP_STATE	=	$B0		; stoneship pump state
+	DRAINED_EXIT = $01
+	DRAINED_TUNNELS = $02
+	DRAINED_LIGHTHOUSE=$04
+
 BATTERY_CHARGE	=	$B1		; stoneship battery charge
-COMPASS_ANGLE	=	$B2		; stoneship compass angle
+COMPASS_STATE	=	$B2		; stoneship compass state
+	COMPASS_DEFAULT	= 0	; cabin lights off
+	COMPASS_LIGHT_ON= 1	; proper angle selected
 CRANK_ANGLE	=	$B3		; stoneship crank angle
 
 WHITE_PAGE_TAKEN=	$B4		; white page taken
@@ -238,7 +248,9 @@ TRUNK_STATE		= $C9		; trunk state in stonsehip
 	TRUNK_VALVE_OPEN    = $01
 	TRUNK_WATER_DRAINED = $02
 	TRUNK_KEY_TAKEN	    = $04
-	TRUNK_HATCH_OPEN    = $08
+	TRUNK_LID_OPEN	    = $08
+	TRUNK_HATCH_OPEN    = $10
+	TRUNK_KEY_ON_FLOOR  = $20
 
 SELENA_BUTTON_STATUS	= $CA
 	SELENA_BUTTON1	=	$01	; POOL  (water)
@@ -248,21 +260,26 @@ SELENA_BUTTON_STATUS	= $CA
 	SELENA_BUTTON5	=	$10	; TUNNEL (wind)
 	SELENA_LIGHTSWITCH=	$80	; light in the tunnel
 
-SELENA_ANTENNA1		= $CB
-SELENA_ANTENNA2		= $CC
-SELENA_ANTENNA3		= $CD
-SELENA_ANTENNA4		= $CE
-SELENA_ANTENNA5		= $CF
+SELENA_ANTENNA1		= $CB	; rotation angle for antenna1
+SELENA_ANTENNA2		= $CC	; rotation angle for antenna1
+SELENA_ANTENNA3		= $CD	; rotation angle for antenna1
+SELENA_ANTENNA4		= $CE	; rotation angle for antenna1
+SELENA_ANTENNA5		= $CF	; rotation angle for antenna1
 
-SELENA_LOCK1		= $D0
-SELENA_LOCK2		= $D1
-SELENA_LOCK3		= $D2
-SELENA_LOCK4		= $D3
-SELENA_LOCK5		= $D4
+SELENA_LOCK1		= $D0	; antenna lock slider1
+SELENA_LOCK2		= $D1	; antenna lock slider2
+SELENA_LOCK3		= $D2	; antenna lock slider3
+SELENA_LOCK4		= $D3	; antenna lock slider4
+SELENA_LOCK5		= $D4	; antenna lock slider5
 
-SELENA_ANTENNA_ACTIVE	= $D5
+SELENA_ANTENNA_ACTIVE	= $D5	; which antenna currently selected
 
-END_OF_SAVE	=	$D6
+SUB_LOCATION		= $D6
+SUB_DIRECTION		= $D7
+
+NIBEL_PROJECTOR		= $D8	; which button on projector in nibel
+
+END_OF_SAVE	=	$D9
 
 
 ; done game puzzle state

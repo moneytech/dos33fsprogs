@@ -14,6 +14,12 @@ Compiling:
 	Then run "make" and hope for the best
 
 
+Load times of ~8k DENTIST:		MIST ~40k
+	DOS33:		7s		TOO-BIG
+	PRODOS:
+	QKUMBA RTS:	5s		22s
+	TRACK-AT_TIME:
+
 
 Sizes:
 	sectors on disk = 35*16 = 560
@@ -22,31 +28,48 @@ Sizes:
 				======
 				  496
 
-	disk1:
+New disk1:
+	TRACK	SECTOR
+	0	0	BOOT
+	0	2,4	STAGE2/QBOOT_CORE
+	0	1,3,5,7,9	= SAVE0,1,2,3,4
+	1	0..14	LOADER
+	2..7	*	MIST_TITLE
+	8..17	*	MIST
+	18..26	*	OCTAGON
+	27,28	*	VIEWER
+	29,30	*	DENTIST
+	31,32	*	D'NI
+	33,34	*	SHIP
+
+
+	disk1:					SECTORS		TRACKS
+		BOOT/SAVE					1	1T0S
 		HELLO		  566	->   768 ->   3
-		LOADER		 4006	->  4096 ->  16
-		MIST_TITLE	21008	-> 21248 ->  83
-		MIST		39780	-> 39936 -> 156
-		OCTAGON		32627	-> 32768 -> 128
-		VIEWER		 4834   ->  4864 ->  19
-		DENTIST		 7879   ->  7936 ->  31
-		D'NI		 6863   ->  6912 ->  27
-		SAVE0		   74   ->   256 ->   1
-		SHIP		 5047   ->  5120 ->  20
-						========
-						484+10 = 494 = 126k
+		LOADER		 4013	->  4096 ->  16		1	1T0S
+		MIST_TITLE	21008	-> 21248 ->  83		6	5T3S
+		MIST		40653	-> 40704 -> 159		10	9T13S
+		OCTAGON		32610	-> 32768 -> 128		8	8T0S
+		VIEWER		 4834   ->  4864 ->  19		2	1T3S
+		DENTIST		 7879   ->  7936 ->  31		2	2T0S
+		D'NI		 6863   ->  6912 ->  27		2	1T11S
+		SAVE0		   88   ->   256 ->   1		1
+		SHIP		 5047   ->  5120 ->  20		2	1T4S
+						========	====	=====
+				484+10 = 494 = 126k		34	30T8S
 
 	disk2:
-		CHANNEL		34418	-> 34560 -> 135
-		ARBOR		31591	-> 31744 -> 124
-		NIBEL		15467	-> 15616 -> 61
-		CABIN		15398	-> 15616 -> 61
-						========
-						  381+4= 385 = 98k
+		CHANNEL		34418	-> 34560 -> 135		9	
+		ARBOR		31591	-> 31744 -> 124		8
+		NIBEL		27688	-> 28904 -> 109		6
+		CABIN		15398	-> 15616 -> 61		4
+		GENERATOR	 8434	->  8448 -> 33		3	2T1S
+						========	===
+					414+5= 419 = 104k	30
 	disk3:
-		MECHE		28857	-> 28928 -> 113
-		SELENA		32902	-> 33024 -> 129
-		STONEY		29984	-> 30208 -> 118
-		GENERATOR	 7456	->  7680 -> 30
-						========
-						390+4=394 = 100k
+		MECHE		32004	-> 32256 -> 126		8
+		SELENA		36912	-> 37120 -> 145		10
+		STONEY		40195	-> 40448 -> 158		10
+		SUB		13786	-> 13824 -> 54		4		
+						========	====
+					503+5=508 = 127k	32

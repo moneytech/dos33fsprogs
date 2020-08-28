@@ -29,6 +29,38 @@ back_to_mist:
 	rts
 
 
+draw_circuit_breaker:
+	lda	ANIMATE_FRAME
+	beq	done_draw_circuit_breaker
+
+	lda	#17
+	sta	XPOS
+	lda	#12
+	sta	YPOS
+
+	lda	#<breaker_down_sprite
+	sta	INL
+	lda	#>breaker_down_sprite
+	sta	INH
+
+	jsr	put_sprite_crop
+
+	lda	FRAMEL
+	and	#$1f
+	bne	done_draw_circuit_breaker
+
+	dec	ANIMATE_FRAME
+
+done_draw_circuit_breaker:
+	rts
+
+
+breaker_down_sprite:
+	.byte 3,2
+	.byte $90,$0f,$90
+	.byte $69,$65,$69
+
+
 ;=======================
 ; flip circuit breaker
 
@@ -38,6 +70,9 @@ back_to_mist:
 circuit_breaker:
 
 	jsr	click_speaker		; click speaker
+
+	lda	#2
+	sta	ANIMATE_FRAME
 
 	lda	LOCATION
 	cmp	#MIST_TOWER2_TOP
@@ -76,6 +111,14 @@ done_turn_on_breaker:
 
 open_gen_door:
 
+	lda	gen_door_status
+	eor	#$1
+	sta	gen_door_status
+
+	beq	gen_close_door
+
+gen_open_door:
+
 	ldy	#LOCATION_NORTH_EXIT
 	lda	#GEN_GENERATOR_ROOM
 	sta	location3,Y			; GEN_GENERATOR_DOOR
@@ -90,10 +133,32 @@ open_gen_door:
 	lda	#>gen_door_open_n_lzsa
 	sta	location3+1,Y			; GEN_GENERATOR_DOOR
 
-	jsr	change_location
+	jmp	change_location
 
-	rts
+gen_close_door:
 
+	; disable exit
+	ldy	#LOCATION_NORTH_EXIT
+	lda	#$ff
+	sta	location3,Y			; GEN_GENERATOR_DOOR
+
+	ldy	#LOCATION_NORTH_EXIT_DIR
+	lda	#$ff
+	sta	location3,Y			; GEN_GENERATOR_DOOR
+
+	; change background
+
+	ldy	#LOCATION_NORTH_BG
+	lda	#<gen_door_closed_n_lzsa
+	sta	location3,Y			; GEN_GENERATOR_DOOR
+	lda	#>gen_door_closed_n_lzsa
+	sta	location3+1,Y			; GEN_GENERATOR_DOOR
+
+	jmp	change_location
+
+
+gen_door_status:
+	.byte	$00	; closed
 
 button_lookup:
 .byte $10,$8,$4,$2,$1
@@ -114,6 +179,36 @@ needle_strings:
 ;============================
 
 generator_button_press:
+
+	lda	DIRECTION
+	and	#$f
+	cmp	#DIRECTION_N
+	beq	really_the_panel
+
+	; otherwise, the sign
+
+	lda	CURSOR_X
+	cmp	#27
+	bcs	draw_sign
+
+	; not draw sign, leave room
+
+	lda	#GEN_GENERATOR_DOOR
+	sta	LOCATION
+	jmp	change_location
+
+draw_sign:
+
+	lda	#GEN_SIGN
+	sta	LOCATION
+
+	lda	#(DIRECTION_S|DIRECTION_SPLIT)
+	sta	DIRECTION
+
+	jmp	change_location
+
+
+really_the_panel:
 
 	lda	CURSOR_Y
 	cmp	#38

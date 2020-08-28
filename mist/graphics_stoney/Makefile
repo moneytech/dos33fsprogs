@@ -14,7 +14,11 @@ stoney_graphics.inc:	\
 	umbrella_path_e.lzsa umbrella_path_w.lzsa \
 	lighthouse_path_e.lzsa lighthouse_path_w.lzsa \
 	lighthouse_door_e.lzsa lighthouse_door_w.lzsa \
-	lighthouse_inside_e.lzsa lighthouse_inside_w.lzsa lighthouse_inside_n.lzsa \
+	lighthouse_inside_e.lzsa lighthouse_inside_w.lzsa \
+	lighthouse_inside_locked_e.lzsa \
+	lighthouse_inside_n.lzsa \
+	lighthouse_inside_nowater_n.lzsa lighthouse_inside_notrunk_n.lzsa \
+	lighthouse_inside_lidup_n.lzsa \
 	lighthouse_upstairs_e.lzsa lighthouse_upstairs_w.lzsa \
 	lighthouse_battery_w.lzsa \
 	lighthouse_downladder_e.lzsa \
@@ -39,14 +43,19 @@ stoney_graphics.inc:	\
 	left_airlock_n.lzsa left_airlock_s.lzsa left_airlock_open_n.lzsa \
 	red_room_n.lzsa red_room_s.lzsa red_room_e.lzsa red_room_w.lzsa \
 	dresser_e.lzsa dresser_open_e.lzsa \
-	compass_room_w.lzsa compass_room_e.lzsa \
-	compass_rose_w.lzsa \
+	compass_room_n.lzsa compass_room_w.lzsa compass_room_e.lzsa \
+	compass_rose_w.lzsa compass_rose_lit_w.lzsa \
 	crawlway_e.lzsa crawlway_w.lzsa \
 	blue_room_n.lzsa blue_room_s.lzsa blue_room_e.lzsa blue_room_w.lzsa \
 	map_case_open_e.lzsa map_case_closed_e.lzsa \
-	right_airlock_open_n.lzsa \
-	left_letter.lzsa
-	echo "arrival_n_lzsa: .incbin \"arrival_n.lzsa\"" >> stoney_graphics.inc
+	right_tunnel1_n.lzsa right_tunnel1_s.lzsa \
+	right_tunnel2_n.lzsa right_tunnel2_s.lzsa right_tunnel2_w.lzsa \
+	right_airlock_n.lzsa right_airlock_s.lzsa right_airlock_open_n.lzsa \
+	left_letter.lzsa \
+	crawlway_entrance_e.lzsa \
+	trunk_n.lzsa trunk_close_n.lzsa \
+	spiral_n.lzsa spiral_s.lzsa
+	echo "arrival_n_lzsa: .incbin \"arrival_n.lzsa\"" > stoney_graphics.inc
 	echo "arrival_s_lzsa: .incbin \"arrival_s.lzsa\"" >> stoney_graphics.inc
 	echo "arrival_e_lzsa: .incbin \"arrival_e.lzsa\"" >> stoney_graphics.inc
 	echo "arrival_w_lzsa: .incbin \"arrival_w.lzsa\"" >> stoney_graphics.inc
@@ -59,8 +68,12 @@ stoney_graphics.inc:	\
 	echo "lighthouse_door_e_lzsa: .incbin \"lighthouse_door_e.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_door_w_lzsa: .incbin \"lighthouse_door_w.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_inside_e_lzsa: .incbin \"lighthouse_inside_e.lzsa\"" >> stoney_graphics.inc
+	echo "lighthouse_inside_locked_e_lzsa: .incbin \"lighthouse_inside_locked_e.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_inside_w_lzsa: .incbin \"lighthouse_inside_w.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_inside_n_lzsa: .incbin \"lighthouse_inside_n.lzsa\"" >> stoney_graphics.inc
+	echo "lighthouse_inside_nowater_n_lzsa: .incbin \"lighthouse_inside_nowater_n.lzsa\"" >> stoney_graphics.inc
+	echo "lighthouse_inside_notrunk_n_lzsa: .incbin \"lighthouse_inside_notrunk_n.lzsa\"" >> stoney_graphics.inc
+	echo "lighthouse_inside_lidup_n_lzsa: .incbin \"lighthouse_inside_lidup_n.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_upstairs_e_lzsa: .incbin \"lighthouse_upstairs_e.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_upstairs_w_lzsa: .incbin \"lighthouse_upstairs_w.lzsa\"" >> stoney_graphics.inc
 	echo "lighthouse_battery_w_lzsa: .incbin \"lighthouse_battery_w.lzsa\"" >> stoney_graphics.inc
@@ -114,7 +127,9 @@ stoney_graphics.inc:	\
 	echo "dresser_open_e_lzsa: .incbin \"dresser_open_e.lzsa\"" >> stoney_graphics.inc
 	echo "compass_room_e_lzsa: .incbin \"compass_room_e.lzsa\"" >> stoney_graphics.inc
 	echo "compass_room_w_lzsa: .incbin \"compass_room_w.lzsa\"" >> stoney_graphics.inc
+	echo "compass_room_n_lzsa: .incbin \"compass_room_n.lzsa\"" >> stoney_graphics.inc
 	echo "compass_rose_w_lzsa: .incbin \"compass_rose_w.lzsa\"" >> stoney_graphics.inc
+	echo "compass_rose_lit_w_lzsa: .incbin \"compass_rose_lit_w.lzsa\"" >> stoney_graphics.inc
 	echo "crawlway_e_lzsa: .incbin \"crawlway_e.lzsa\"" >> stoney_graphics.inc
 	echo "crawlway_w_lzsa: .incbin \"crawlway_w.lzsa\"" >> stoney_graphics.inc
 	echo "blue_room_n_lzsa: .incbin \"blue_room_n.lzsa\"" >> stoney_graphics.inc
@@ -123,9 +138,20 @@ stoney_graphics.inc:	\
 	echo "blue_room_w_lzsa: .incbin \"blue_room_w.lzsa\"" >> stoney_graphics.inc
 	echo "map_case_open_e_lzsa: .incbin \"map_case_open_e.lzsa\"" >> stoney_graphics.inc
 	echo "map_case_closed_e_lzsa: .incbin \"map_case_closed_e.lzsa\"" >> stoney_graphics.inc
+	echo "right_tunnel1_n_lzsa: .incbin \"right_tunnel1_n.lzsa\"" >> stoney_graphics.inc
+	echo "right_tunnel1_s_lzsa: .incbin \"right_tunnel1_s.lzsa\"" >> stoney_graphics.inc
+	echo "right_tunnel2_n_lzsa: .incbin \"right_tunnel2_n.lzsa\"" >> stoney_graphics.inc
+	echo "right_tunnel2_s_lzsa: .incbin \"right_tunnel2_s.lzsa\"" >> stoney_graphics.inc
+	echo "right_tunnel2_w_lzsa: .incbin \"right_tunnel2_w.lzsa\"" >> stoney_graphics.inc
+	echo "right_airlock_n_lzsa: .incbin \"right_airlock_n.lzsa\"" >> stoney_graphics.inc
+	echo "right_airlock_s_lzsa: .incbin \"right_airlock_s.lzsa\"" >> stoney_graphics.inc
 	echo "right_airlock_open_n_lzsa: .incbin \"right_airlock_open_n.lzsa\"" >> stoney_graphics.inc
 	echo "left_letter_lzsa: .incbin \"left_letter.lzsa\"" >> stoney_graphics.inc
-
+	echo "crawlway_entrance_e_lzsa: .incbin \"crawlway_entrance_e.lzsa\"" >> stoney_graphics.inc
+	echo "trunk_n_lzsa: .incbin \"trunk_n.lzsa\"" >> stoney_graphics.inc
+	echo "trunk_close_n_lzsa: .incbin \"trunk_close_n.lzsa\"" >> stoney_graphics.inc
+	echo "spiral_n_lzsa: .incbin \"spiral_n.lzsa\"" >> stoney_graphics.inc
+	echo "spiral_s_lzsa: .incbin \"spiral_s.lzsa\"" >> stoney_graphics.inc
 
 
 

@@ -1,3 +1,122 @@
+	;===============================
+	; draw hover crystals
+	;===============================
+draw_crystals:
+	lda	DIRECTION
+	cmp	#DIRECTION_N
+	bne	done_draw_crystals
+
+	lda	CURSOR_Y
+	cmp	#15
+	bcc	done_draw_crystals	; blt
+
+	cmp	#24
+	bcs	done_draw_crystals	; bge
+
+	lda	CURSOR_X
+	cmp	#8
+	bcc	done_draw_crystals
+	cmp	#13
+	bcc	draw_yellow_crystal
+	cmp	#17
+	bcc	done_draw_crystals
+	cmp	#22
+	bcc	draw_green_crystal
+	cmp	#25
+	bcc	done_draw_crystals
+	cmp	#31
+	bcc	draw_red_crystal
+	bcs	done_draw_crystals
+
+draw_yellow_crystal:
+	lda	#10
+	sta	XPOS
+
+	lda	#<yellow_crystal_sprite
+	sta	INL
+	lda	#>yellow_crystal_sprite
+
+	jmp	common_draw_crystal
+draw_green_crystal:
+	lda	#18
+	sta	XPOS
+
+	lda	#<green_crystal_sprite
+	sta	INL
+	lda	#>green_crystal_sprite
+
+	jmp	common_draw_crystal
+draw_red_crystal:
+	lda	#27
+	sta	XPOS
+
+	lda	#<red_crystal_sprite
+	sta	INL
+	lda	#>red_crystal_sprite
+
+common_draw_crystal:
+	sta	INH
+
+	lda	#16
+	sta	YPOS
+
+	jsr	put_sprite_crop
+
+done_draw_crystals:
+	rts
+
+yellow_crystal_sprite:
+	.byte	2,3
+	.byte	$fd,$d5
+	.byte	$dd,$dd
+	.byte	$df,$0d
+
+green_crystal_sprite:
+
+	.byte	3,3
+	.byte	$c5,$cc,$cc
+	.byte	$dc,$dc,$dc
+	.byte	$cc,$cc,$cc
+
+red_crystal_sprite:
+	.byte	3,3
+	.byte	$88,$35,$dd
+	.byte	$33,$bb,$33
+	.byte	$08,$33,$d3
+
+
+
+	;===============================
+	; view telescope
+	;===============================
+view_telescope:
+
+	lda	MECHE_ROTATION
+	; it's a range
+	lsr
+	lsr
+	cmp	#2
+	bne	no_skeleton
+
+yes_skeleton:
+	lda	#MECHE_TELESCOPE_SKELETON
+	sta	LOCATION
+	jmp	change_location
+
+no_skeleton:
+	lda	#MECHE_TELESCOPE_PLAIN
+	sta	LOCATION
+	jmp	change_location
+
+
+	;===============================
+	; top floor up
+	;===============================
+goto_top_floor_up:
+	lda	#MECHE_TOP_FLOOR_UP
+	sta	LOCATION
+	jmp	change_location
+
 
 	;==============================
 	; book page stuff
@@ -30,17 +149,13 @@ enter_blue_secret:
 
 	lda	#MECHE_BLUE_SECRET_DOOR
 	sta	LOCATION
-	jsr	change_location
-
-	rts
+	jmp	change_location
 
 enter_red_secret:
 
 	lda	#MECHE_RED_SECRET_DOOR
 	sta	LOCATION
-	jsr	change_location
-
-	rts
+	jmp	change_location
 
 
 	;===============================
@@ -350,14 +465,19 @@ rot_button_press:
 	; change to plain elevator
 	ldy	#LOCATION_WEST_BG
 	lda	#<top_floor_ye_w_lzsa
-	sta	location27,Y
+	sta	location27,Y			; MECHE_TOP_FLOOR
 	lda	#>top_floor_ye_w_lzsa
-	sta	location27+1,Y
+	sta	location27+1,Y			; MECHE_TOP_FLOOR
 
 	; change destination to controls
 	ldy	#LOCATION_WEST_EXIT
 	lda	#MECHE_IN_ELEVATOR
-	sta	location27,Y
+	sta	location27,Y			; MECHE_TOP_FLOOR
+
+	; restore ability to look up
+	ldy	#LOCATION_SPECIAL_EXIT
+	lda	#DIRECTION_W
+	sta	location27,Y			; MECHE_TOP_FLOOR
 
 	jmp	change_location		; tail call
 
@@ -488,6 +608,11 @@ lever_sprite:
 	; rotate fortress
 
 rotate_fortress:
+
+	; 0  = S
+	; 4  = E
+	; 8  = N
+	; 12 = W
 
 	lda	MECHE_ROTATION
 	lsr
@@ -675,14 +800,19 @@ half_and_controls:
 	; change to elevator roof
 	ldy	#LOCATION_WEST_BG
 	lda	#<top_floor_ne_w_lzsa
-	sta	location27,Y
+	sta	location27,Y			; MECHE_TOP_FLOOR
 	lda	#>top_floor_ne_w_lzsa
-	sta	location27+1,Y
+	sta	location27+1,Y			; MECHE_TOP_FLOOR
 
 	; change destination to controls
 	ldy	#LOCATION_WEST_EXIT
 	lda	#MECHE_ROTATE_CONTROLS
-	sta	location27,Y
+	sta	location27,Y			; MECHE_TOP_FLOOR
+
+	; disable ability to look up
+	ldy	#LOCATION_SPECIAL_EXIT
+	lda	#$ff
+	sta	location27,Y			; MECHE_TOP_FLOOR
 
 	jmp	elevator_button_done_no_update
 

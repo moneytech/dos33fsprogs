@@ -6,36 +6,21 @@ For release 1.0
 
 + MIST
 	-- open door to clock puzzle?
-	-- only allow entering ship if it's up
 	-- another stop on path to spaceship.  Out of room though :(
 	-- MIST_ROCKET_PATH_PAD probably missing ship-raised background
 
 + OCTAGON
 	-- load "red page" sound into LC and play it?
+	-- show "burnt" books if click on non-avail book
+	-- adjust grabbing of actual books
+	-- longer speeches from brothers, most notably the
+		page 5 speeches and ending
 
 + SELENA
-	-- new locations
-		- chasm east
-		- water pool
-		- water path2 n/s
-		- chasm path2 n/s?
-		- crystal path2 n/s?
-		- tunnel lights 1/2/3
-		- submarine message
-		- near book n/s
-
-	-- maybe another location on dock to ship
-	-- sounds/door puzzle
 	-- load 1s clip of sounds (4k each) into language card?
-	-- have sub background change
-	-- enable turning on lights
-	-- flame trench has left/right mixed, left view missing
 
 + STONEY
-	-- hook up compass rose
-	-- hook up pump 
-	-- hook up telescope
-	-- hook up key/trunk puzzle
+	-- allow coming at steps from an angle
 
 + CHANNEL
 	-- from path can still see down elev1 even if up
@@ -43,14 +28,20 @@ For release 1.0
 
 + ARBOR
 	-- rotate windmill if enabled?
+	-- missing treehouses
+	-- can look down elevator1 shaft if not there
 
 + NIBEL
 	-- turn on sprite crop in the viewer part
+		[harder to do this than you might think]
 
 + MECHE
 	-- animations for elevator
-	-- way to click on end puzzle from other angle
 	-- way to turn around in basement
+	-- more of paths to hints
+
++ SUB
+	-- can walk around outside of sub
 
 Done:
 + CABIN
@@ -59,17 +50,17 @@ Done:
 + MIST_TITLE
 + SHIP
 + VIEWER
+	-- real game can erase message?
 
 ================================
 TODO Maybe future:
 
 MIST:
-+ some sort of switch animation on circuit breakers?
 + look at catherine's letter from other side of path
 + Make clock puzzle more similar to actual game
 
 OCTAGON:
-+ in tower could have extra window open/closed far backgrounds
++ in tower could have extra window open/closed far backgrounds(?)
 + turning when looking at hint loses the text mode
 + line drawing on map isn't optimal
 + should hints be black on white text?
@@ -91,15 +82,11 @@ SELENA age:
 	maybe not bother with aiming antennas, but sum button plays
 	if switch been pushed
 	filler sounds for others?
-+ That whole rediculous underground sub sequence
-+ light switch in tunnel
 + antenna compartment should open/close when you click on it
 + better colors
 
 Channelwood:
 + Windmill animation
-+ Switch flip animation
-+ Open faucet animation
 + Animation for bridge rising
 + Animation for pipe extending
 + Animation for book elevator
@@ -109,12 +96,9 @@ Channelwood:
 
 
 Stoneship age:
-+ Implement floating chest puzzle
-+ Implement compass rose light puzzle
-+ Implement raising/lowering water
-+ Implement telescope
-+ Hook up tunnels into compass room properly
-+ Spheres in red room play animations
++ When standing at door to lighthouse should be able
+	to see trunk is up
++ Spheres in red room should play animations
 
 Ending:
 + Atrus at end -- hires?

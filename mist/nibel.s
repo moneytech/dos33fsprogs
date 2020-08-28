@@ -79,6 +79,14 @@ game_loop:
 	beq	fg_draw_red_page
 	cmp	#NIBEL_BLUE_HOUSE_VIEWER
 	beq	animate_viewer
+	cmp	#NIBEL_SHACK_ENTRANCE
+	beq	animate_projector
+	cmp	#NIBEL_SHACK_CENTER
+	beq	animate_trap
+	cmp	#NIBEL_BLUE_PATH_2P25
+	beq	animate_gate_s
+	cmp	#NIBEL_BLUE_PATH_2P5
+	beq	animate_gate_n
 
 	jmp	nothing_special
 
@@ -90,6 +98,21 @@ fg_draw_red_page:
 	jsr	draw_red_page
 	jmp	nothing_special
 
+animate_projector:
+	jsr	draw_projection
+	jmp	nothing_special
+
+animate_trap:
+	jsr	draw_trap
+	jmp	nothing_special
+
+animate_gate_s:
+	jsr	update_gate_s
+	jmp	nothing_special
+
+animate_gate_n:
+	jsr	update_gate_n
+	jmp	nothing_special
 
 animate_viewer:
 	lda	ANIMATE_FRAME
